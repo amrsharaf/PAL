@@ -142,7 +142,7 @@ class RobotCNNDQN:
         self.time_step += 1
 
     def get_action(self, observation):
-        print "DQN is smart."
+        print(  "DQN is smart." )
         self.current_state = observation
         sent, confidence, predictions = self.current_state
         # print sent, confidence, predictions
@@ -283,8 +283,8 @@ class RobotCNNDQN:
         self.w_embeddings = embeddings
         self.vocab_size = len(self.w_embeddings)
         self.embedding_size = len(self.w_embeddings[0])
-        print "Assigning new word embeddings"
-        print "New size", self.vocab_size
+        print(  "Assigning new word embeddings" )
+        print(  "New size", self.vocab_size )
         self.sess.run(self.w.assign(self.w_embeddings))
         self.time_step = 0
         self.replay_memory = deque()

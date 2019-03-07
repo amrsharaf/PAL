@@ -80,10 +80,10 @@ class CRFTagger(object):
         })
         trainer.train(self.model_file)
         if len(trainer.logparser.iterations) != 0:
-            print len(trainer.logparser.iterations), trainer.logparser.iterations[-1]
+            print(  len(trainer.logparser.iterations), trainer.logparser.iterations[-1] )
         else:
             # todo
-            print len(trainer.logparser.iterations)
+            print(  len(trainer.logparser.iterations) )
             print("There is no loss to present")
 
     # different lens
@@ -180,18 +180,18 @@ class CRFTagger(object):
                         rec += 1
 
         res = corr * 1. / total
-        print "Accuracy (token level)", res
+        print(  "Accuracy (token level)", res )
         if pre_tot == 0:
             pre = 0
         else:
             pre = 1. * pre / pre_tot
         rec = 1. * rec / rec_tot
-        print "Precision", pre, "Recall", rec
+        print(  "Precision", pre, "Recall", rec )
 
         beta = 1
         f1score = 0
         if pre != 0 or rec != 0:
             f1score = (beta * beta + 1) * pre * rec / \
                 (beta * beta * pre + rec)
-        print "F1", f1score
+        print(  "F1", f1score )
         return f1score

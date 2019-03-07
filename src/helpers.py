@@ -45,7 +45,7 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
             if emb_size == 0:
                 emb_size = len(parts) - 1
             else:
-                print "Different embedding size!"
+                print(  "Different embedding size!" )
                 break
 
         w = parts[0]
@@ -71,13 +71,13 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
 
     cur_i = len(vocab_w2v)
     if len(vocab_w2v) > max_vocab_size:
-        print "Vocabulary size is larger than", max_vocab_size
+        print(  "Vocabulary size is larger than", max_vocab_size )
         raise SystemExit
     while cur_i < max_vocab_size:
         cur_i += 1
         padding = [0] * emb_size
         vocab_w2v.append(padding)
-    print "Vocabulary", n_dict, "Embedding size", emb_size
+    print(  "Vocabulary", n_dict, "Embedding size", emb_size )
     return vocab_w2v
 
 

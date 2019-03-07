@@ -43,7 +43,7 @@ def parse_args():
     # load the train data: source languages
     parts = args.train.split(";")
     if len(parts) % 5 != 0:
-        print "Wrong inputs of training"
+        print("Wrong inputs of training")
         raise SystemExit
     global TRAIN_LANG_NUM
     TRAIN_LANG_NUM = len(parts) / 5
@@ -58,7 +58,7 @@ def parse_args():
     # load the test data: target languages
     parts = args.test.split(";")
     if len(parts) % 5 != 0:
-        print "Wrong inputs of testing"
+        print("Wrong inputs of testing")
         raise SystemExit
     global TEST_LANG_NUM
     TEST_LANG_NUM = len(parts) / 5
@@ -82,7 +82,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget):
     print("Processing data")
     # build vocabulary
     max_len = FLAGS.max_seq_len
-    print "Max document length:", max_len
+    print(  "Max document length:", max_len )
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
         max_document_length=max_len, min_frequency=1)
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
@@ -99,7 +99,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget):
 
     # prepare story
     story = [train_x, train_y, train_idx]
-    print "The length of the story ", len(train_x), " ( DEV = ", len(dev_x), " TEST = ", len(test_x), " )"
+    print(  "The length of the story ", len(train_x), " ( DEV = ", len(dev_x), " TEST = ", len(test_x), " )" )
     test = [test_x, test_y, test_idx]
     dev = [dev_x, dev_y, dev_idx]
     # load game
@@ -134,7 +134,7 @@ def test_agent_batch(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(test_sents))
-    print "***TEST", performance
+    print(  "***TEST", performance )
 
 
 def test_agent_online(robot, game, model, budget):
@@ -166,7 +166,7 @@ def test_agent_online(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(test_sents))
-    print "***TEST", performance
+    print(  "***TEST", performance )
 
 
 def play_ner():
@@ -179,7 +179,7 @@ def play_ner():
     elif AGENT == "CNNDQN":
         robot = RobotCNNDQN(actions)
     else:
-        print "** There is no robot."
+        print(  "** There is no robot." )
         raise SystemExit
 
     global TRAIN_LANG, TRAIN_LANG_NUM, BUDGET
@@ -200,16 +200,16 @@ def play_ner():
         episode = 1
         print(">>>>>> Playing game ..")
         while episode <= MAX_EPISODE:
-            print '>>>>>>> Current game round ', episode, 'Maximum ', MAX_EPISODE
+            print(  '>>>>>>> Current game round ', episode, 'Maximum ', MAX_EPISODE )
             observation = game.get_frame(model)
             action = robot.get_action(observation)
-            print '> Action', action
+            print(  '> Action', action )
             reward, observation2, terminal = game.feedback(action, model)
-            print '> Reward', reward
+            print(  '> Reward', reward )
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
                 episode += 1
-                print '> Terminal <'
+                print(  '> Terminal <' )
     return robot
 
 
