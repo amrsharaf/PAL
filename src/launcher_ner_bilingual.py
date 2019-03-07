@@ -151,9 +151,8 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner():
+def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET):
     actions = 2
-    global AGENT
     if AGENT == "random":
         robot = RobotRandom(actions)
     elif AGENT == "DQN":
@@ -164,8 +163,6 @@ def play_ner():
         print(  "** There is no robot." )
         raise SystemExit
 
-    # TODO remove these global variables
-    global TRAIN_LANG, TRAIN_LANG_NUM, BUDGET
     for i in range(TRAIN_LANG_NUM):
         train = TRAIN_LANG[i][0]
         test = TRAIN_LANG[i][1]
@@ -196,8 +193,7 @@ def play_ner():
     return robot
 
 
-def test(robot):
-    global TEST_LANG, TEST_LANG_NUM, BUDGET
+def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET):
     for i in range(TEST_LANG_NUM):
         train = TEST_LANG[i][0]
         test = TEST_LANG[i][1]
@@ -228,9 +224,10 @@ def main():
         print("{}={}".format(attr.upper(), value))
     print("")
     # play games for training a robot
-    robot = play_ner()
+    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET)
     # play a new game with the trained robot
-    test(robot)
+    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET)
+
 
 if __name__ == '__main__':
     main()
