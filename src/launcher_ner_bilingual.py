@@ -209,20 +209,21 @@ def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET):
 
 def main():
     # TODO unify tensorflow and argparse command line flags
-    # tensorflow flag for the maximum sequence length
-    tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
-    # tensorflow flag for the maximum vocabulary size
-    tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
+    # TODO re-enable the tensorflow command line
+#    # tensorflow flag for the maximum sequence length
+#    tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
+#    # tensorflow flag for the maximum vocabulary size
+#    tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
+#    FLAGS = tf.flags.FLAGS
+#    FLAGS._parse_flags()
+#    print("\nParameters:")
+#    for attr, value in sorted(FLAGS.__flags.items()):
+#        print("{}={}".format(attr.upper(), value))
+#    print("")
 
     # TODO some of these values could be changed after parsing, make sure the changes are reflected correctly
     AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM = parse_args()
 
-    FLAGS = tf.flags.FLAGS
-    FLAGS._parse_flags()
-    print("\nParameters:")
-    for attr, value in sorted(FLAGS.__flags.items()):
-        print("{}={}".format(attr.upper(), value))
-    print("")
     # play games for training a robot
     robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET)
     # play a new game with the trained robot
