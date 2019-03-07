@@ -8,7 +8,8 @@ import tensorflow as tf
 import random
 from tagger import CRFTagger
 
-def parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG):
+# TODO call by reference global variables!
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--agent', help="require a decision agent")
     parser.add_argument(
@@ -25,8 +26,8 @@ def parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG):
     if len(parts) % 5 != 0:
         print("Wrong inputs of training")
         raise SystemExit
-    global TRAIN_LANG_NUM
     TRAIN_LANG_NUM = int(len(parts) / 5)
+    TRAIN_LANG = []
     for i in range(TRAIN_LANG_NUM):
         lang_i = i * 5
         train = parts[lang_i + 0]
@@ -40,8 +41,8 @@ def parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG):
     if len(parts) % 5 != 0:
         print("Wrong inputs of testing")
         raise SystemExit
-    global TEST_LANG_NUM
     TEST_LANG_NUM = int(len(parts) / 5)
+    TEST_LANG = []
     for i in range(TEST_LANG_NUM):
         lang_i = i * 5
         train = parts[lang_i + 0]
@@ -50,7 +51,8 @@ def parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG):
         emb = parts[lang_i + 3]
         tagger = parts[lang_i + 4]
         TEST_LANG.append((train, test, dev, emb, tagger))
-
+    # TODO maybe create a structure for these variables
+    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM
 
 def initialise_game(train_file, test_file, dev_file, emb_file, budget):
     # Load data
@@ -162,6 +164,7 @@ def play_ner():
         print(  "** There is no robot." )
         raise SystemExit
 
+    # TODO remove these global variables
     global TRAIN_LANG, TRAIN_LANG_NUM, BUDGET
     for i in range(TRAIN_LANG_NUM):
         train = TRAIN_LANG[i][0]
@@ -215,16 +218,8 @@ def main():
     # tensorflow flag for the maximum vocabulary size
     tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
 
-
-    AGENT = "CNNDQN"
-    MAX_EPISODE = 0
-    BUDGET = 0
-    TRAIN_LANG = []
-    TRAIN_LANG_NUM = 1
-    TEST_LANG = []
-    TEST_LANG_NUM = 1
-
-    parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG)
+    # TODO some of these values could be changed after parsing, make sure the changes are reflected correctly
+    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM = parse_args()
 
     FLAGS = tf.flags.FLAGS
     FLAGS._parse_flags()
