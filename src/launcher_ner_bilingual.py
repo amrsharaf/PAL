@@ -8,26 +8,7 @@ import tensorflow as tf
 import random
 from tagger import CRFTagger
 
-tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
-tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
-
-FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
-print("\nParameters:")
-for attr, value in sorted(FLAGS.__flags.items()):
-    print("{}={}".format(attr.upper(), value))
-print("")
-
-AGENT = "CNNDQN"
-MAX_EPISODE = 0
-BUDGET = 0
-TRAIN_LANG = []
-TRAIN_LANG_NUM = 1
-TEST_LANG = []
-TEST_LANG_NUM = 1
-
-
-def parse_args():
+def parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG):
     parser = argparse.ArgumentParser()
     parser.add_argument('--agent', help="require a decision agent")
     parser.add_argument(
@@ -36,7 +17,6 @@ def parse_args():
     parser.add_argument('--train', help="training phase")
     parser.add_argument('--test', help="testing phase")
     args = parser.parse_args()
-    global AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG
     AGENT = args.agent
     MAX_EPISODE = int(args.episode)
     BUDGET = int(args.budget)
@@ -46,7 +26,7 @@ def parse_args():
         print("Wrong inputs of training")
         raise SystemExit
     global TRAIN_LANG_NUM
-    TRAIN_LANG_NUM = len(parts) / 5
+    TRAIN_LANG_NUM = int(len(parts) / 5)
     for i in range(TRAIN_LANG_NUM):
         lang_i = i * 5
         train = parts[lang_i + 0]
@@ -61,7 +41,7 @@ def parse_args():
         print("Wrong inputs of testing")
         raise SystemExit
     global TEST_LANG_NUM
-    TEST_LANG_NUM = len(parts) / 5
+    TEST_LANG_NUM = int(len(parts) / 5)
     for i in range(TEST_LANG_NUM):
         lang_i = i * 5
         train = parts[lang_i + 0]
@@ -229,7 +209,29 @@ def test(robot):
 
 
 def main():
-    parse_args()
+    # TODO unify tensorflow and argparse command line flags
+    # tensorflow flag for the maximum sequence length
+    tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
+    # tensorflow flag for the maximum vocabulary size
+    tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
+
+
+    AGENT = "CNNDQN"
+    MAX_EPISODE = 0
+    BUDGET = 0
+    TRAIN_LANG = []
+    TRAIN_LANG_NUM = 1
+    TEST_LANG = []
+    TEST_LANG_NUM = 1
+
+    parse_args(AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG)
+
+    FLAGS = tf.flags.FLAGS
+    FLAGS._parse_flags()
+    print("\nParameters:")
+    for attr, value in sorted(FLAGS.__flags.items()):
+        print("{}={}".format(attr.upper(), value))
+    print("")
     # play games for training a robot
     robot = play_ner()
     # play a new game with the trained robot
