@@ -221,7 +221,6 @@ def main():
 #        print("{}={}".format(attr.upper(), value))
 #    print("")
 
-    # TODO some of these values could be changed after parsing, make sure the changes are reflected correctly
     AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM = parse_args()
 
     # play games for training a robot
