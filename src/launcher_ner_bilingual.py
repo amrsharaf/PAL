@@ -54,7 +54,7 @@ def parse_args():
     # TODO maybe create a structure for these variables
     return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM
 
-def initialise_game(train_file, test_file, dev_file, emb_file, budget):
+def initialise_game(train_file, test_file, dev_file, emb_file, budget, FLAGS):
     # Load data
     print("Loading data ..")
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
@@ -151,7 +151,7 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET):
+def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, FLAGS):
     actions = 2
     if AGENT == "random":
         robot = RobotRandom(actions)
@@ -170,7 +170,7 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET):
         emb = TRAIN_LANG[i][3]
         tagger = TRAIN_LANG[i][4]
         # initilise a NER game
-        game = initialise_game(train, test, dev, emb, BUDGET)
+        game = initialise_game(train, test, dev, emb, BUDGET, FLAGS)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
@@ -193,14 +193,14 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET):
     return robot
 
 
-def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET):
+def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, FLAGS):
     for i in range(TEST_LANG_NUM):
         train = TEST_LANG[i][0]
         test = TEST_LANG[i][1]
         dev = TEST_LANG[i][2]
         emb = TEST_LANG[i][3]
         tagger = TEST_LANG[i][4]
-        game2 = initialise_game(train, test, dev, emb, BUDGET)
+        game2 = initialise_game(train, test, dev, emb, BUDGET, FLAGS)
         robot.update_embeddings(game2.w2v)
         model = CRFTagger(tagger)
         test_agent_batch(robot, game2, model, BUDGET)
@@ -214,7 +214,7 @@ def main():
 #    tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
 #    # tensorflow flag for the maximum vocabulary size
 #    tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
-#    FLAGS = tf.flags.FLAGS
+    FLAGS = tf.flags.FLAGS
 #    FLAGS._parse_flags()
 #    print("\nParameters:")
 #    for attr, value in sorted(FLAGS.__flags.items()):
@@ -224,9 +224,9 @@ def main():
     AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM = parse_args()
 
     # play games for training a robot
-    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET)
+    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET, FLAGS=FLAGS)
     # play a new game with the trained robot
-    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET)
+    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, FLAGS=FLAGS)
 
 
 if __name__ == '__main__':
