@@ -3,21 +3,32 @@ import argparse
 # Parse command line flags
 def parse_arguments():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--file', '-f', help='file name', required=True)
+    ap.add_argument('--input', '-i', help='file name', required=True)
+    ap.add_argument('--output', '-o', help='output file', required=True)
     return ap.parse_args()
 
 def cleanup_line(line):
-    return None
+    splits = line.strip().split()
+    if len(splits) == 0:
+        return line.strip()
+    else:
+        return ' '.join([splits[0], splits[-1]])
 
 def main():
     args = parse_arguments()
-    file_name = args.file
-    print('reading data from: ', file_name)
-    with open(file_name, 'r') as input_file:
-        lines = input_file.readlines()
-        for line in lines:
-            splits = line.strip().split()
-            print(splits)
+    input_file = args.input
+    output_file = args.output
+    print('reading data from: ', input_file)
+    print('writing data to: ', output_file)
+    with open(output_file, 'w') as output_writer:
+        print('successfully opened output file...')
+        with open(input_file, 'r') as input_reader:
+            lines = input_reader.readlines()
+            for line in lines:
+                new_line = cleanup_line(line)
+                output_writer.write(new_line)
+                output_writer.write('\n')
+    print('done with pre-processing...')
 
 if __name__ == '__main__':
     main()
