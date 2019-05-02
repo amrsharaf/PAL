@@ -11,6 +11,7 @@
  - Install [TensorFlow](https://www.tensorflow.org/)
  - Install [pycrfsuite](https://python-crfsuite.readthedocs.io/en/latest/index.html)
 
+
  ## Code
 
  - launcher_ner_bilingual: the starter of playing
