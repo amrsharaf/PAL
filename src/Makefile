@@ -5,7 +5,10 @@ main:
 	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10000 --budget 1000 --train "data/conll2003/en.train;data/conll2003/en.testa;data/conll2003/en.testb;data/embeddings/muse/ascii.txt;models/en.model.saved" --test "de.train;de.testa;de.testb;de.emb;de.model.saved" --embedding_size 300
 
 main_es:
-	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10000 --budget 10 --train "data/conll2002/es.train;data/conll2002/es.testa;data/conll2002/es.testb;data/embeddings/cca/es.emb;models/es.model.saved" --test "de.train;de.testa;de.testb;de.emb;de.model.saved" --embedding_size 40
+	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10 --budget 10 --train "data/conll2002/es.train;data/conll2002/es.testa;data/conll2002/es.testb;data/embeddings/cca/es.emb;models/es.model.saved" --test "de.train;de.testa;de.testb;de.emb;de.model.saved" --embedding_size 40
+
+main_nl:
+	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10 --budget 10 --train "data/conll2002/nl.train;data/conll2002/nl.testa;data/conll2002/nl.testb;data/embeddings/cca/nl.emb;models/nl.model.saved" --test "data/conll2003/de.train;data/conll2003/de.testa;data/conll2003/de.testb;data/embeddings/cca/de.emb;models/de.model.saved" --embedding_size 40
 
 split:
 	python split_embedddings.py --language nl --input_path data/embeddings/CCA/fifty_nine.table5.multiCCA.size_40.normalized --output_path data/embeddings/CCA/nl.emb
@@ -19,4 +22,14 @@ preprocess_es:
 	python preprocess.py -i data/conll2002/esp.train -o data/conll2002/es.train;
 	python preprocess.py -i data/conll2002/esp.testa -o data/conll2002/es.testa;
 	python preprocess.py -i data/conll2002/esp.testb -o data/conll2002/es.testb;
+
+preprocess_nl:
+	python preprocess.py -i data/conll2002/ned.train -o data/conll2002/nl.train;
+	python preprocess.py -i data/conll2002/ned.testa -o data/conll2002/nl.testa;
+	python preprocess.py -i data/conll2002/ned.testb -o data/conll2002/nl.testb;
+
+preprocess_de:
+	python preprocess.py -i data/conll2003/deu.train -o data/conll2003/de.train;
+	python preprocess.py -i data/conll2003/deu.testa -o data/conll2003/de.testa;
+	python preprocess.py -i data/conll2003/deu.testb -o data/conll2003/de.testb;
 
