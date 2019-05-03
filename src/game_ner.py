@@ -21,7 +21,7 @@ class NERGame:
         self.w2v = w2v
 
         print(  "Story: length = ", len(self.train_x) )
-        self.order = range(0, len(self.train_x))
+        self.order = list(range(0, len(self.train_x)))
         # if re-order, use random.shuffle(self.order)
         # load word embeddings, pretrained - w2v
         # print "Dictionary size", len(self.w2v), "Embedding size",
