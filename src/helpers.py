@@ -35,7 +35,7 @@ def load_data2labels(input_file):
 
 
 def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
-    embeddings = list(open(input_file, "r").readlines())
+    embeddings = list(open(input_file, "r", encoding="utf-8").readlines())
     pre_w2v = {}
     emb_size = 0
     for emb in embeddings:
