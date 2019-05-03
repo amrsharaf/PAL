@@ -19,7 +19,7 @@ EXPLORE = 100000.  # frames over which to anneal epsilon
 
 class RobotCNNDQN:
 
-    def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[]):
+    def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[], embedding_size=40):
         print("Creating a robot: CNN-DQN")
         # replay memory
         self.replay_memory = deque()
@@ -32,7 +32,7 @@ class RobotCNNDQN:
 
         self.vocab_size = vocab_size
         self.max_len = max_len
-        self.embedding_size = 40
+        self.embedding_size = embedding_size
         self.create_qnetwork()
         self.saver = tf.train.Saver()
 

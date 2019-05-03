@@ -21,6 +21,8 @@ def parse_args():
     parser.add_argument('--max_seq_len', default=120, required=False, help='sequence')
     # tensorflow flag for the maximum vocabulary size
     parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
+    # Embedding size
+    parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
     args = parser.parse_args()
     AGENT = args.agent
     MAX_EPISODE = int(args.episode)
@@ -58,7 +60,8 @@ def parse_args():
     # TODO maybe create a structure for these variables
     max_seq_len = args.max_seq_len
     max_vocab_size = args.max_vocab_size
-    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size
+    embedding_size = args.embedding_size
+    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size, embedding_size
 
 
 def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
@@ -158,14 +161,14 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size):
+def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size, embedding_size):
     actions = 2
     if AGENT == "random":
         robot = RobotRandom(actions)
     elif AGENT == "DQN":
         robot = RobotDQN(actions)
     elif AGENT == "CNNDQN":
-        robot = RobotCNNDQN(actions)
+        robot = RobotCNNDQN(actions, embedding_size=embedding_size)
     else:
         print(  "** There is no robot." )
         raise SystemExit
@@ -228,12 +231,12 @@ def main():
 #    print("")
 
     # TODO refactor this part!
-    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size = parse_args()
+    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size, embedding_size = parse_args()
 
 
     # play games for training a robot
     robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET,
-                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
+                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size)
     # play a new game with the trained robot
     test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, max_seq_len=max_seq_len,
          max_vocab_size=max_vocab_size)
