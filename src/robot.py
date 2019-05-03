@@ -142,7 +142,7 @@ class RobotCNNDQN:
         self.time_step += 1
 
     def get_action(self, observation):
-        print(  "DQN is smart." )
+        print("DQN is smart.")
         self.current_state = observation
         sent, confidence, predictions = self.current_state
         # print sent, confidence, predictions
