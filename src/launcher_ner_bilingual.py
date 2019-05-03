@@ -218,22 +218,9 @@ def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, max_seq_len, max_vocab_size):
 
 
 def main():
-    # TODO unify tensorflow and argparse command line flags
-    # TODO re-enable the tensorflow command line
-
-    # TODO going to remove all tensorflow flags and use dependency injection instead
-#    FLAGS = tf.flags.FLAGS
-
-#    FLAGS._parse_flags()
-#    print("\nParameters:")
-#    for attr, value in sorted(FLAGS.__flags.items()):
-#        print("{}={}".format(attr.upper(), value))
-#    print("")
-
+    # TODO print command line flag settings
     # TODO refactor this part!
     AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size, embedding_size = parse_args()
-
-
     # play games for training a robot
     robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
