@@ -161,7 +161,7 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size, embedding_size):
+def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size, embedding_size, MAX_EPISODE):
     actions = 2
     if AGENT == "random":
         robot = RobotRandom(actions)
@@ -236,7 +236,8 @@ def main():
 
     # play games for training a robot
     robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET,
-                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size)
+                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
+                     MAX_EPISODE=MAX_EPISODE)
     # play a new game with the trained robot
     test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, max_seq_len=max_seq_len,
          max_vocab_size=max_vocab_size)
