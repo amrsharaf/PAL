@@ -20,9 +20,9 @@ def main():
     output_file = args.output
     print('reading data from: ', input_file)
     print('writing data to: ', output_file)
-    with open(output_file, 'w') as output_writer:
+    with open(output_file, 'w', encoding='utf-8') as output_writer:
         print('successfully opened output file...')
-        with open(input_file, 'r') as input_reader:
+        with open(input_file, 'r', encoding='latin-1') as input_reader:
             lines = input_reader.readlines()
             for line in lines:
                 new_line = cleanup_line(line)
