@@ -17,6 +17,10 @@ def parse_args():
     parser.add_argument('--budget', help="requrie a budget for annotating")
     parser.add_argument('--train', help="training phase")
     parser.add_argument('--test', help="testing phase")
+    # tensorflow flag for the maximum sequence length
+    parser.add_argument('--max_seq_len', default=120, required=False, help='sequence')
+    # tensorflow flag for the maximum vocabulary size
+    parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
     args = parser.parse_args()
     AGENT = args.agent
     MAX_EPISODE = int(args.episode)
@@ -52,9 +56,12 @@ def parse_args():
         tagger = parts[lang_i + 4]
         TEST_LANG.append((train, test, dev, emb, tagger))
     # TODO maybe create a structure for these variables
-    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM
+    max_seq_len = args.max_seq_len
+    max_vocab_size = args.max_vocab_size
+    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size
 
-def initialise_game(train_file, test_file, dev_file, emb_file, budget, FLAGS):
+
+def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
     # Load data
     print("Loading data ..")
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
@@ -63,7 +70,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, FLAGS):
 
     print("Processing data")
     # build vocabulary
-    max_len = FLAGS.max_seq_len
+    max_len = max_seq_len
     print(  "Max document length:", max_len )
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
         max_document_length=max_len, min_frequency=1)
@@ -76,7 +83,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, FLAGS):
 
     # build embeddings
     vocab = vocab_processor.vocabulary_
-    vocab_size = FLAGS.max_vocab_size
+    vocab_size = max_vocab_size
     w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size)
 
     # prepare story
@@ -151,7 +158,7 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, FLAGS):
+def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size):
     actions = 2
     if AGENT == "random":
         robot = RobotRandom(actions)
@@ -170,7 +177,7 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, FLAGS):
         emb = TRAIN_LANG[i][3]
         tagger = TRAIN_LANG[i][4]
         # initilise a NER game
-        game = initialise_game(train, test, dev, emb, BUDGET, FLAGS)
+        game = initialise_game(train, test, dev, emb, BUDGET, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
@@ -193,14 +200,14 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, FLAGS):
     return robot
 
 
-def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, FLAGS):
+def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, max_seq_len, max_vocab_size):
     for i in range(TEST_LANG_NUM):
         train = TEST_LANG[i][0]
         test = TEST_LANG[i][1]
         dev = TEST_LANG[i][2]
         emb = TEST_LANG[i][3]
         tagger = TEST_LANG[i][4]
-        game2 = initialise_game(train, test, dev, emb, BUDGET, FLAGS)
+        game2 = initialise_game(train, test, dev, emb, BUDGET, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
         robot.update_embeddings(game2.w2v)
         model = CRFTagger(tagger)
         test_agent_batch(robot, game2, model, BUDGET)
@@ -210,23 +217,26 @@ def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, FLAGS):
 def main():
     # TODO unify tensorflow and argparse command line flags
     # TODO re-enable the tensorflow command line
-#    # tensorflow flag for the maximum sequence length
-#    tf.flags.DEFINE_integer("max_seq_len", 120, "sequence")
-#    # tensorflow flag for the maximum vocabulary size
-#    tf.flags.DEFINE_integer("max_vocab_size", 20000, "vocabulary")
-    FLAGS = tf.flags.FLAGS
+
+    # TODO going to remove all tensorflow flags and use dependency injection instead
+#    FLAGS = tf.flags.FLAGS
+
 #    FLAGS._parse_flags()
 #    print("\nParameters:")
 #    for attr, value in sorted(FLAGS.__flags.items()):
 #        print("{}={}".format(attr.upper(), value))
 #    print("")
 
-    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM = parse_args()
+    # TODO refactor this part!
+    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size = parse_args()
+
 
     # play games for training a robot
-    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET, FLAGS=FLAGS)
+    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET,
+                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
     # play a new game with the trained robot
-    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, FLAGS=FLAGS)
+    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, max_seq_len=max_seq_len,
+         max_vocab_size=max_vocab_size)
 
 
 if __name__ == '__main__':
