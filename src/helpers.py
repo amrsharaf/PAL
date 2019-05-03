@@ -62,7 +62,7 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
     n_dict = len(vocab._mapping)
     vocab_w2v = [None] * n_dict
     # vocab_w2v[0]=np.random.uniform(-0.25,0.25,100)
-    for w, i in vocab._mapping.iteritems():
+    for w, i in vocab._mapping.items():
         if w in pre_w2v:
             vocab_w2v[i] = pre_w2v[w]
         else:
