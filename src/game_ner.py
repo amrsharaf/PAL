@@ -12,7 +12,7 @@ class NERGame:
     def __init__(self, story, test, dev, max_len, w2v, budget):
         # build environment
         # load data as story
-        print("Initilizing the game:")
+        print("Initializing the game:")
         # import story
         self.train_x, self.train_y, self.train_idx = story
         self.test_x, self.test_y, self.test_idx = test
@@ -20,7 +20,7 @@ class NERGame:
         self.max_len = max_len
         self.w2v = w2v
 
-        print(  "Story: length = ", len(self.train_x) )
+        print("Story: length = ", len(self.train_x))
         self.order = list(range(0, len(self.train_x)))
         # if re-order, use random.shuffle(self.order)
         # load word embeddings, pretrained - w2v
@@ -139,7 +139,7 @@ class NERGame:
             self.queried_set_y.append(labels)
             self.queried_set_idx.append(
                 self.train_idx[self.order[self.current_frame]])
-            print(  "> Queried times", len(self.queried_set_x) )
+            print("> Queried times", len(self.queried_set_x))
 
     # tagger = model
     def get_performance(self, tagger):
@@ -151,7 +151,7 @@ class NERGame:
             performance = tagger.test(self.dev_idx, self.dev_y)
             return performance
 
-        print(  len(self.queried_set_x), len(self.queried_set_y) )
+        print(len(self.queried_set_x), len(self.queried_set_y))
         train_sents = helpers.data2sents(
             self.queried_set_x, self.queried_set_y)
         # print train_sents
