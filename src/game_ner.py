@@ -174,4 +174,4 @@ class NERGame:
         self.queried_set_idx = []
         self.current_frame = 0
         self.episode += 1
-        print(  "> Next episode", self.episode )
+        print("> Next episode", self.episode)
