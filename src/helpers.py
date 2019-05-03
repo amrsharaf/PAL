@@ -18,7 +18,7 @@ def load_data2labels(input_file):
     seq_set_label = []
     seq_label = []
     seq_set_len = []
-    with open(input_file, "r") as f:
+    with open(input_file, "r", encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if line == "":
@@ -44,7 +44,7 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
             if emb_size == 0:
                 emb_size = len(parts) - 1
             else:
-                print(  "Different embedding size!" )
+                print("Different embedding size!")
                 break
 
         w = parts[0]
