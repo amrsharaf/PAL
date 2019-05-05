@@ -81,11 +81,12 @@ class CRFTagger(object):
             logging.info('There is no loss to present')
 
     # different lens
+    # TODO can we refactor the sent2features better to avoid similar bugs in the future?
     def get_predictions(self, sent):
         sent = sent.split()
         # use the same interface sent2features expects
         sent = [(s, '') for s in sent]
-        x = self.sent2features(sent)
+        sent = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             y_marginals = []
@@ -125,8 +126,11 @@ class CRFTagger(object):
         confidence = pow(p_y_pred, 1. / len(y_pred))
         return [confidence]
 
+    # TODO this seems to be unused?!
     def get_uncertainty(self, sent):
         sent = sent.split()
+        # use the same interface sent2features expects
+        sent = [(s, '') for s in sent]
         x = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
