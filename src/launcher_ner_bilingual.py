@@ -5,7 +5,7 @@ import numpy as np
 import helpers
 import tensorflow as tf
 from tagger import CRFTagger
-
+import logging
 
 # TODO call by reference global variables!
 def parse_args():
@@ -22,45 +22,7 @@ def parse_args():
     parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
     # Embedding size
     parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
-    args = parser.parse_args()
-    AGENT = args.agent
-    MAX_EPISODE = int(args.episode)
-    BUDGET = int(args.budget)
-    # load the train data: source languages
-    parts = args.train.split(";")
-    if len(parts) % 5 != 0:
-        print("Wrong inputs of training")
-        raise SystemExit
-    TRAIN_LANG_NUM = int(len(parts) / 5)
-    TRAIN_LANG = []
-    for i in range(TRAIN_LANG_NUM):
-        lang_i = i * 5
-        train = parts[lang_i + 0]
-        test = parts[lang_i + 1]
-        dev = parts[lang_i + 2]
-        emb = parts[lang_i + 3]
-        tagger = parts[lang_i + 4]
-        TRAIN_LANG.append((train, test, dev, emb, tagger))
-    # load the test data: target languages
-    parts = args.test.split(";")
-    if len(parts) % 5 != 0:
-        print("Wrong inputs of testing")
-        raise SystemExit
-    TEST_LANG_NUM = int(len(parts) / 5)
-    TEST_LANG = []
-    for i in range(TEST_LANG_NUM):
-        lang_i = i * 5
-        train = parts[lang_i + 0]
-        test = parts[lang_i + 1]
-        dev = parts[lang_i + 2]
-        emb = parts[lang_i + 3]
-        tagger = parts[lang_i + 4]
-        TEST_LANG.append((train, test, dev, emb, tagger))
-    # TODO maybe create a structure for these variables
-    max_seq_len = args.max_seq_len
-    max_vocab_size = args.max_vocab_size
-    embedding_size = args.embedding_size
-    return AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size, embedding_size
+    return parser.parse_args()
 
 
 def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
@@ -160,26 +122,26 @@ def test_agent_online(robot, game, model, budget):
     print(  "***TEST", performance )
 
 
-def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_size, embedding_size, MAX_EPISODE):
+def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode):
     actions = 2
-    if AGENT == "random":
+    if agent == "random":
         robot = RobotRandom(actions)
-    elif AGENT == "DQN":
+    elif agent == "DQN":
         robot = RobotDQN(actions)
-    elif AGENT == "CNNDQN":
+    elif agent == "CNNDQN":
         robot = RobotCNNDQN(actions, embedding_size=embedding_size)
     else:
         print(  "** There is no robot." )
         raise SystemExit
 
-    for i in range(TRAIN_LANG_NUM):
-        train = TRAIN_LANG[i][0]
-        test = TRAIN_LANG[i][1]
-        dev = TRAIN_LANG[i][2]
-        emb = TRAIN_LANG[i][3]
-        tagger = TRAIN_LANG[i][4]
+    for i in range(train_lang_num):
+        train = train_lang[i][0]
+        test = train_lang[i][1]
+        dev = train_lang[i][2]
+        emb = train_lang[i][3]
+        tagger = train_lang[i][4]
         # initilise a NER game
-        game = initialise_game(train, test, dev, emb, BUDGET, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
+        game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
@@ -188,8 +150,8 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_s
         # play game
         episode = 1
         print(">>>>>> Playing game ..")
-        while episode <= MAX_EPISODE:
-            print(  '>>>>>>> Current game round ', episode, 'Maximum ', MAX_EPISODE )
+        while episode <= max_episode:
+            print('>>>>>>> Current game round ', episode, 'Maximum ', max_episode)
             observation = game.get_frame(model)
             action = robot.get_action(observation)
             print(  '> Action', action )
@@ -202,30 +164,83 @@ def play_ner(AGENT, TRAIN_LANG, TRAIN_LANG_NUM, BUDGET, max_seq_len, max_vocab_s
     return robot
 
 
-def test(robot, TEST_LANG, TEST_LANG_NUM, BUDGET, max_seq_len, max_vocab_size):
-    for i in range(TEST_LANG_NUM):
-        train = TEST_LANG[i][0]
-        test = TEST_LANG[i][1]
-        dev = TEST_LANG[i][2]
-        emb = TEST_LANG[i][3]
-        tagger = TEST_LANG[i][4]
-        game2 = initialise_game(train, test, dev, emb, BUDGET, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
+def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size):
+    for i in range(test_lang_num):
+        train = test_lang[i][0]
+        test = test_lang[i][1]
+        dev = test_lang[i][2]
+        emb = test_lang[i][3]
+        tagger = test_lang[i][4]
+        game2 = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
         robot.update_embeddings(game2.w2v)
         model = CRFTagger(tagger)
-        test_agent_batch(robot, game2, model, BUDGET)
-        test_agent_online(robot, game2, model, BUDGET)
+        test_agent_batch(robot, game2, model, budget)
+        test_agent_online(robot, game2, model, budget)
+
+
+# TODO can we get rid of the side effects in this function?
+def set_logger(log_path):
+    logger = logging.get_logger()
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
+    logger.addHandler(file_handler)
+    # Log to console
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(stream_handler)
 
 
 def main():
     # TODO print command line flag settings
     # TODO refactor this part!
-    AGENT, MAX_EPISODE, BUDGET, TRAIN_LANG, TEST_LANG, TRAIN_LANG_NUM, TEST_LANG_NUM, max_seq_len, max_vocab_size, embedding_size = parse_args()
+    args = parse_args()
+    print('got args: ')
+    print(args)
+    # Agent type
+    agent = args.agent
+    max_episode = int(args.episode)
+    budget = int(args.budget)
+    # load the train data: source languages
+    parts = args.train.split(";")
+    if len(parts) % 5 != 0:
+        print("Wrong inputs of training")
+        raise SystemExit
+    train_lang_num = int(len(parts) / 5)
+    train_lang = []
+    for i in range(train_lang_num):
+        lang_i = i * 5
+        train = parts[lang_i + 0]
+        test = parts[lang_i + 1]
+        dev = parts[lang_i + 2]
+        emb = parts[lang_i + 3]
+        tagger = parts[lang_i + 4]
+        train_lang.append((train, test, dev, emb, tagger))
+    # load the test data: target languages
+    parts = args.test.split(";")
+    if len(parts) % 5 != 0:
+        print("Wrong inputs of testing")
+        raise SystemExit
+    test_lang_num = int(len(parts) / 5)
+    test_lang = []
+    for i in range(test_lang_num):
+        lang_i = i * 5
+        train = parts[lang_i + 0]
+        test = parts[lang_i + 1]
+        dev = parts[lang_i + 2]
+        emb = parts[lang_i + 3]
+        tagger = parts[lang_i + 4]
+        test_lang.append((train, test, dev, emb, tagger))
+    # TODO maybe create a structure for these variables
+    max_seq_len = args.max_seq_len
+    max_vocab_size = args.max_vocab_size
+    embedding_size = args.embedding_size
     # play games for training a robot
-    robot = play_ner(AGENT=AGENT, TRAIN_LANG=TRAIN_LANG, TRAIN_LANG_NUM=TRAIN_LANG_NUM, BUDGET=BUDGET,
+    robot = play_ner(agent=agent, train_lang=train_lang, train_lang_num=train_lang_num, budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     MAX_EPISODE=MAX_EPISODE)
+                     max_episode=max_episode)
     # play a new game with the trained robot
-    test(robot=robot, TEST_LANG=TEST_LANG, TEST_LANG_NUM=TEST_LANG_NUM, BUDGET=BUDGET, max_seq_len=max_seq_len,
+    run_test(robot=robot, test_lang=test_lang, test_lang_num=test_lang_num, budget=budget, max_seq_len=max_seq_len,
          max_vocab_size=max_vocab_size)
 
 
