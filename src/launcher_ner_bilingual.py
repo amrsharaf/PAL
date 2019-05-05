@@ -37,8 +37,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     # build vocabulary
     max_len = max_seq_len
     logging.info('Max document length: {0}'.format(max_len))
-    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
-        max_document_length=max_len, min_frequency=1)
+    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(max_document_length=max_len, min_frequency=1)
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
     train_idx = np.array(list(vocab_processor.fit_transform(train_x)))
     dev_idx = np.array(list(vocab_processor.fit_transform(dev_x)))
@@ -217,7 +216,6 @@ def main():
     train_lang = construct_languages(args.train)
     # load the test data: target languages
     test_lang = construct_languages(args.test)
-    # TODO maybe create a structure for these variables
     max_seq_len = args.max_seq_len
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
