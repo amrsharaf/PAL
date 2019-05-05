@@ -122,9 +122,13 @@ def test_agent_online(robot, game, model, budget):
 def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode):
     actions = 2
     if agent == 'random':
-        robot = RobotRandom(actions)
+        # TODO Implement this
+        assert False
+#        robot = RobotRandom(actions)
     elif agent == 'DQN':
-        robot = RobotDQN(actions)
+        # TODO Implement this
+        assert False
+#        robot = RobotDQN(actions)
     elif agent == 'CNNDQN':
         robot = RobotCNNDQN(actions, embedding_size=embedding_size)
     else:
