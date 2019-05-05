@@ -47,8 +47,7 @@ class RobotCNNDQN:
     def create_qnetwork(self):
         # read a sentence
         self.process_sentence()
-        self.state_confidence = tf.placeholder(
-            tf.float32, [None, 1], name="input_confidence")
+        self.state_confidence = tf.placeholder(tf.float32, [None, 1], name="input_confidence")
         self.process_prediction()
 
         # network weights

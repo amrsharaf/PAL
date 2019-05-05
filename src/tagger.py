@@ -3,6 +3,7 @@ import os
 import helpers
 import random
 import math
+import logging
 from functools import lru_cache
 
 
@@ -10,11 +11,13 @@ from functools import lru_cache
 class CRFTagger(object):
 
     def __init__(self, model_file):
-        print("CRF Tagger")
+        logging.info('CRF Tagger')
         self.model_file = model_file
-        self.name = "CRF"
+        self.name = 'CRF'
 
     def word2features(self, sent, i):
+        assert len(sent[i]) == 2
+        assert type(sent[i][0] == str)
         word = sent[i][0]
         #postag = sent[i][1]
         features = [
@@ -40,7 +43,6 @@ class CRFTagger(object):
             ])
         else:
             features.append('BOS')
-
         if i < len(sent) - 1:
             word1 = sent[i + 1][0]
             #postag1 = sent[i + 1][1]
@@ -53,7 +55,6 @@ class CRFTagger(object):
             ])
         else:
             features.append('EOS')
-
         return features
 
 #    @lru_cache(maxsize=None)
@@ -77,21 +78,22 @@ class CRFTagger(object):
             'c1': 1.0,   # coefficient for L1 penalty
             'c2': 1e-3,  # coefficient for L2 penalty
             'max_iterations': 50,  # stop earlier
-
             # include transitions that are possible, but not observed
             'feature.possible_transitions': True
         })
         trainer.train(self.model_file)
         if len(trainer.logparser.iterations) != 0:
-            print(  len(trainer.logparser.iterations), trainer.logparser.iterations[-1] )
+            logging.info('{} {}'.format(len(trainer.logparser.iterations), trainer.logparser.iterations[-1]))
         else:
             # todo
-            print(  len(trainer.logparser.iterations) )
-            print("There is no loss to present")
+            logging.info(len(trainer.logparser.iterations))
+            logging.info('There is no loss to present')
 
     # different lens
     def get_predictions(self, sent):
         sent = sent.split()
+        # use the same interface sent2features expects
+        sent = [(s, '') for s in sent]
         x = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
@@ -99,7 +101,6 @@ class CRFTagger(object):
             for i in range(len(sent)):
                 y_marginals.append([0.2] * 5)
             return y_marginals
-
         tagger.open(self.model_file)
         tagger.set(sent)
         y_marginals = []
@@ -119,12 +120,13 @@ class CRFTagger(object):
     # use P(yseq|xseq)
     def get_confidence(self, sent):
         sent = sent.split()
+        # Add a dummy label because sent2features using this interface
+        sent = [(s, '') for s in sent]
         x = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             confidence = 0.2
             return [confidence]
-
         tagger.open(self.model_file)
         tagger.set(sent)
         y_pred = tagger.tag()
@@ -181,20 +183,18 @@ class CRFTagger(object):
                     rec_tot += 1
                     if y_pred[i][j] == Y_true[i][j]:
                         rec += 1
-
         res = corr * 1. / total
-        print(  "Accuracy (token level)", res )
+        logging.info('Accuracy (token level) {}'.format(res))
         if pre_tot == 0:
             pre = 0
         else:
             pre = 1. * pre / pre_tot
         rec = 1. * rec / rec_tot
-        print(  "Precision", pre, "Recall", rec )
-
+        logging.info('Precision {} Recall {}'.format(pre, rec))
         beta = 1
         f1score = 0
         if pre != 0 or rec != 0:
             f1score = (beta * beta + 1) * pre * rec / \
                 (beta * beta * pre + rec)
-        print(  "F1", f1score )
+        logging.info('F1 {}'.format(f1score))
         return f1score

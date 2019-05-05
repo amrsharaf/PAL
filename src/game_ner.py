@@ -45,9 +45,7 @@ class NERGame:
         self.make_query = False
         sentence = self.train_x[self.order[self.current_frame]]
         sentence_idx = self.train_idx[self.order[self.current_frame]]
-        confidence = 0.
-        predictions = []
-        if model.name == "CRF":
+        if model.name == 'CRF':
             confidence = model.get_confidence(sentence)
             predictions = model.get_predictions(sentence)
         else:
@@ -63,7 +61,6 @@ class NERGame:
             preds_padding = predictions[0:self.max_len]
         else:
             preds_padding = predictions
-
         obervation = [sentence_idx, confidence, preds_padding]
         return obervation
 
@@ -83,7 +80,6 @@ class NERGame:
                 #reward = -1.
         else:
             reward = 0.
-
         # next frame
         next_sentence = []
         next_sentence_idx = []
@@ -120,7 +116,6 @@ class NERGame:
             preds_padding = predictions[0:self.max_len]
         else:
             preds_padding = predictions
-
         next_observation = [next_sentence_idx, confidence, preds_padding]
         return reward, next_observation, is_terminal
 
@@ -133,8 +128,7 @@ class NERGame:
             # logging.info "Select:", sentence, labels
             self.queried_set_x.append(sentence)
             self.queried_set_y.append(labels)
-            self.queried_set_idx.append(
-                self.train_idx[self.order[self.current_frame]])
+            self.queried_set_idx.append(self.train_idx[self.order[self.current_frame]])
             logging.info('> Queried times {}'.format(len(self.queried_set_x)))
 
     # tagger = model
@@ -153,7 +147,7 @@ class NERGame:
         # test on development data
         test_sents = helpers.data2sents(self.dev_x, self.dev_y)
         performance = tagger.test(test_sents)
-        #performance = self.model.test2conlleval(self.dev_x, self.dev_y)
+        # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
         return performance
 
     def reboot(self):
