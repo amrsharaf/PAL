@@ -1,12 +1,11 @@
-import sys
 import argparse
 from game_ner import NERGame
 from robot import RobotCNNDQN
 import numpy as np
 import helpers
 import tensorflow as tf
-import random
 from tagger import CRFTagger
+
 
 # TODO call by reference global variables!
 def parse_args():
@@ -74,7 +73,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     print("Processing data")
     # build vocabulary
     max_len = max_seq_len
-    print(  "Max document length:", max_len )
+    print("Max document length:", max_len)
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
         max_document_length=max_len, min_frequency=1)
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
