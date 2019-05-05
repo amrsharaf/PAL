@@ -29,14 +29,14 @@ def parse_args():
 
 def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
     # Load data
-    print('Loading data ..')
+    logging.info('Loading data ..')
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
     test_x, test_y, test_lens = helpers.load_data2labels(test_file)
     dev_x, dev_y, dev_lens = helpers.load_data2labels(dev_file)
-    print('Processing data')
+    logging.info('Processing data')
     # build vocabulary
     max_len = max_seq_len
-    print('Max document length:', max_len)
+    logging.info('Max document length: {0}'.format(max_len))
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
         max_document_length=max_len, min_frequency=1)
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
@@ -51,11 +51,11 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size)
     # prepare story
     story = [train_x, train_y, train_idx]
-    print(  "The length of the story ", len(train_x), " ( DEV = ", len(dev_x), " TEST = ", len(test_x), " )" )
+    logging.info('The length of the story {0} (DEV = {1}  TEST = {2})'.format(len(train_x), len(dev_x), len(test_x)))
     test = [test_x, test_y, test_idx]
     dev = [dev_x, dev_y, dev_idx]
     # load game
-    print("Loading game ..")
+    logging.info('Loading game ..')
     game = NERGame(story, test, dev, max_len, w2v, budget)
     return game
 
@@ -86,7 +86,7 @@ def test_agent_batch(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(test_sents))
-    print('***TEST', performance)
+    logging.info('***TEST {0}'.format(performance))
 
 
 def test_agent_online(robot, game, model, budget):
@@ -117,19 +117,19 @@ def test_agent_online(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(test_sents))
-    print(  "***TEST", performance )
+    logging.info('***TEST {0}'.format(performance))
 
 
 def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode):
     actions = 2
-    if agent == "random":
+    if agent == 'random':
         robot = RobotRandom(actions)
-    elif agent == "DQN":
+    elif agent == 'DQN':
         robot = RobotDQN(actions)
-    elif agent == "CNNDQN":
+    elif agent == 'CNNDQN':
         robot = RobotCNNDQN(actions, embedding_size=embedding_size)
     else:
-        print(  "** There is no robot." )
+        logging.info('** There is no robot.')
         raise SystemExit
 
     for i in range(train_lang_num):
@@ -147,18 +147,18 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         model = CRFTagger(tagger)
         # play game
         episode = 1
-        print(">>>>>> Playing game ..")
+        logging.info('>>>>>> Playing game ..')
         while episode <= max_episode:
-            print('>>>>>>> Current game round ', episode, 'Maximum ', max_episode)
+            logging.info('>>>>>>> Current game round {0} Maximum  {1}'.format(episode, max_episode))
             observation = game.get_frame(model)
             action = robot.get_action(observation)
-            print('> Action', action)
+            logging.info('> Action {0}'.format(action))
             reward, observation2, terminal = game.feedback(action, model)
-            print('> Reward', reward)
+            logging.info('> Reward {0}'.format(reward))
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
                 episode += 1
-                print('> Terminal <')
+                logging.info('> Terminal <')
     return robot
 
 
@@ -181,11 +181,11 @@ def set_logger(log_path):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(log_path)
-    file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
+#    file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
     logger.addHandler(file_handler)
     # Log to console
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter('%(message)s'))
+#    stream_handler.setFormatter(logging.Formatter('%(message)s'))
     logger.addHandler(stream_handler)
 
 
@@ -194,7 +194,7 @@ def construct_languages(all_langs):
     parts = all_langs.split(";")
     train_lang_num = int(len(parts) / 5)
     if len(parts) % 5 != 0:
-        print("Wrong inputs of training")
+        logging.info('Wrong inputs of training')
         raise SystemExit
     langs = []
     for i in range(train_lang_num):
@@ -213,8 +213,8 @@ def main():
     # TODO refactor this part!
     args = parse_args()
     set_logger(args.log_path)
-    print('got args: ')
-    print(args)
+    logging.info('got args: ')
+    logging.info(args)
     # Agent type
     agent = args.agent
     max_episode = int(args.episode)
