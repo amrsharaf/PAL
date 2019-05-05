@@ -27,7 +27,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
+def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
     logging.info('Loading data ..')
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
@@ -47,7 +47,7 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     # build embeddings
     vocab = vocab_processor.vocabulary_
     vocab_size = max_vocab_size
-    w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size)
+    w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size, emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx]
     logging.info('The length of the story {0} (DEV = {1}  TEST = {2})'.format(len(train_x), len(dev_x), len(test_x)))
@@ -119,7 +119,8 @@ def test_agent_online(robot, game, model, budget):
     logging.info('***TEST {0}'.format(performance))
 
 
-def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode):
+def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode,
+             emb_size):
     actions = 2
     if agent == 'random':
         # TODO Implement this
@@ -142,7 +143,8 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         emb = train_lang[i][3]
         tagger = train_lang[i][4]
         # initialize a NER game
-        game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
+        game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
+                               emb_size=emb_size)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
@@ -165,14 +167,15 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
     return robot
 
 
-def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size):
+def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size, emb_size):
     for i in range(test_lang_num):
         train = test_lang[i][0]
         test = test_lang[i][1]
         dev = test_lang[i][2]
         emb = test_lang[i][3]
         tagger = test_lang[i][4]
-        game2 = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
+        game2 = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
+                                emb_size=emb_size)
         robot.update_embeddings(game2.w2v)
         model = CRFTagger(tagger)
         test_agent_batch(robot, game2, model, budget)
@@ -226,10 +229,10 @@ def main():
     # play games for training a robot
     robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     max_episode=args.episode)
+                     max_episode=args.episode, emb_size=embedding_size)
     # play a new game with the trained robot
     run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
-             max_vocab_size=max_vocab_size)
+             max_vocab_size=max_vocab_size, emb_size=embedding_size)
 
 
 if __name__ == '__main__':

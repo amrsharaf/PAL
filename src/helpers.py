@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 import re
 import itertools
 from collections import Counter
@@ -34,31 +35,25 @@ def load_data2labels(input_file):
     return [seq_set, seq_set_label, seq_set_len]
 
 
-def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
+def remove_language_prefix(embedding):
+    return embedding[3:]
+
+
+# TODO pickle the output of this function to make the performance faster
+def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_size=40):
     embeddings = list(open(input_file, "r", encoding="utf-8").readlines())
+    # Pre-process to remove the language prefix
+    embeddings = map(remove_language_prefix, embeddings)
     pre_w2v = {}
-    emb_size = 0
     for emb in embeddings:
         parts = emb.strip().split()
-        if emb_size != (len(parts) - 1):
-            if emb_size == 0:
-                emb_size = len(parts) - 1
-            else:
-                print("Different embedding size!")
-                break
-
+        # Make sure embeddings have the correct dimensions
+        assert emb_size == (len(parts) - 1)
         w = parts[0]
-        w_parts = w.split(":")
-        if len(w_parts) != 2:
-            w = ":"
-        else:
-            w = w_parts[1]
         vec = []
         for i in range(1, len(parts)):
             vec.append(float(parts[i]))
-        # print w, vec
         pre_w2v[w] = vec
-
     n_dict = len(vocab._mapping)
     vocab_w2v = [None] * n_dict
     # vocab_w2v[0]=np.random.uniform(-0.25,0.25,100)
@@ -67,16 +62,15 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000):
             vocab_w2v[i] = pre_w2v[w]
         else:
             vocab_w2v[i] = list(np.random.uniform(-0.25, 0.25, emb_size))
-
     cur_i = len(vocab_w2v)
     if len(vocab_w2v) > max_vocab_size:
-        print(  "Vocabulary size is larger than", max_vocab_size )
+        print('Vocabulary size is larger than ', max_vocab_size)
         raise SystemExit
     while cur_i < max_vocab_size:
         cur_i += 1
         padding = [0] * emb_size
         vocab_w2v.append(padding)
-    print(  "Vocabulary", n_dict, "Embedding size", emb_size )
+    logging.info('Vocabulary {} Embedding size {}'.format(n_dict, emb_size))
     return vocab_w2v
 
 
