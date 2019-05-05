@@ -1,2 +1,6 @@
 src/data/
 src/models/
+__pycache__/
+log.txt
+*.xml
+*.iml
