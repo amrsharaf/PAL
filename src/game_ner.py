@@ -1,10 +1,5 @@
-import numpy as np
-import sys
 import random
-from tagger import CRFTagger
 import helpers
-#from gensim.models import doc2vec, word2vec
-import tensorflow as tf
 
 
 class NERGame:
