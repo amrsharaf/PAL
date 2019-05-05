@@ -7,6 +7,7 @@ import tensorflow as tf
 from tagger import CRFTagger
 import logging
 
+
 # TODO call by reference global variables!
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -191,6 +192,25 @@ def set_logger(log_path):
     logger.addHandler(stream_handler)
 
 
+def construct_languages(all_langs):
+    # load the train data: source languages
+    parts = all_langs.split(";")
+    train_lang_num = int(len(parts) / 5)
+    if len(parts) % 5 != 0:
+        print("Wrong inputs of training")
+        raise SystemExit
+    langs = []
+    for i in range(train_lang_num):
+        lang_i = i * 5
+        train = parts[lang_i + 0]
+        test = parts[lang_i + 1]
+        dev = parts[lang_i + 2]
+        emb = parts[lang_i + 3]
+        tagger = parts[lang_i + 4]
+        langs.append((train, test, dev, emb, tagger))
+    return langs
+
+
 def main():
     # TODO print command line flag settings
     # TODO refactor this part!
@@ -201,47 +221,20 @@ def main():
     agent = args.agent
     max_episode = int(args.episode)
     budget = int(args.budget)
-    # load the train data: source languages
-    parts = args.train.split(";")
-    if len(parts) % 5 != 0:
-        print("Wrong inputs of training")
-        raise SystemExit
-    train_lang_num = int(len(parts) / 5)
-    train_lang = []
-    for i in range(train_lang_num):
-        lang_i = i * 5
-        train = parts[lang_i + 0]
-        test = parts[lang_i + 1]
-        dev = parts[lang_i + 2]
-        emb = parts[lang_i + 3]
-        tagger = parts[lang_i + 4]
-        train_lang.append((train, test, dev, emb, tagger))
+    train_lang = construct_languages(args.train)
     # load the test data: target languages
-    parts = args.test.split(";")
-    if len(parts) % 5 != 0:
-        print("Wrong inputs of testing")
-        raise SystemExit
-    test_lang_num = int(len(parts) / 5)
-    test_lang = []
-    for i in range(test_lang_num):
-        lang_i = i * 5
-        train = parts[lang_i + 0]
-        test = parts[lang_i + 1]
-        dev = parts[lang_i + 2]
-        emb = parts[lang_i + 3]
-        tagger = parts[lang_i + 4]
-        test_lang.append((train, test, dev, emb, tagger))
+    test_lang = construct_languages(args.test)
     # TODO maybe create a structure for these variables
     max_seq_len = args.max_seq_len
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
     # play games for training a robot
-    robot = play_ner(agent=agent, train_lang=train_lang, train_lang_num=train_lang_num, budget=budget,
+    robot = play_ner(agent=agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
                      max_episode=max_episode)
     # play a new game with the trained robot
-    run_test(robot=robot, test_lang=test_lang, test_lang_num=test_lang_num, budget=budget, max_seq_len=max_seq_len,
-         max_vocab_size=max_vocab_size)
+    run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
+             max_vocab_size=max_vocab_size)
 
 
 if __name__ == '__main__':
