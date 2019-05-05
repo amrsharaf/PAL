@@ -3,8 +3,10 @@ import os
 import helpers
 import random
 import math
+from functools import lru_cache
 
 
+# TODO Implement RNN model
 class CRFTagger(object):
 
     def __init__(self, model_file):
@@ -54,6 +56,7 @@ class CRFTagger(object):
 
         return features
 
+#    @lru_cache(maxsize=None)
     def sent2features(self, sent):
         return [self.word2features(sent, i) for i in range(len(sent))]
 
@@ -116,7 +119,6 @@ class CRFTagger(object):
     # use P(yseq|xseq)
     def get_confidence(self, sent):
         sent = sent.split()
-        x = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             confidence = 0.2
