@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
     # Embedding size
     parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
+    parser.add_argument('--log_path', type=str, required=False, default='log.txt', help='log file path')
     return parser.parse_args()
 
 
@@ -177,7 +178,7 @@ def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_siz
 
 # TODO can we get rid of the side effects in this function?
 def set_logger(log_path):
-    logger = logging.get_logger()
+    logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(log_path)
     file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
@@ -211,6 +212,7 @@ def main():
     # TODO print command line flag settings
     # TODO refactor this part!
     args = parse_args()
+    set_logger(args.log_path)
     print('got args: ')
     print(args)
     # Agent type
