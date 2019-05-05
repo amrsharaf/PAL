@@ -13,8 +13,7 @@ import logging
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--agent', help="require a decision agent")
-    parser.add_argument(
-        '--episode', help="require a maximum number of playing the game")
+    parser.add_argument( '--episode', type=int, help="require a maximum number of playing the game")
     parser.add_argument('--budget', help="requrie a budget for annotating")
     parser.add_argument('--train', help="training phase")
     parser.add_argument('--test', help="testing phase")
