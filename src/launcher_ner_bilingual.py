@@ -225,7 +225,7 @@ def main():
     # play games for training a robot
     robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     max_episode=args.max_episode)
+                     max_episode=args.episode)
     # play a new game with the trained robot
     run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
              max_vocab_size=max_vocab_size)
