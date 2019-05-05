@@ -210,15 +210,10 @@ def construct_languages(all_langs):
 
 
 def main():
-    # TODO print command line flag settings
-    # TODO refactor this part!
     args = parse_args()
-    set_logger(args.log_path)
     logging.info('got args: ')
     logging.info(args)
-    # Agent type
-    agent = args.agent
-    max_episode = int(args.episode)
+    set_logger(args.log_path)
     budget = int(args.budget)
     train_lang = construct_languages(args.train)
     # load the test data: target languages
@@ -228,9 +223,9 @@ def main():
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
     # play games for training a robot
-    robot = play_ner(agent=agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
+    robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     max_episode=max_episode)
+                     max_episode=args.max_episode)
     # play a new game with the trained robot
     run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
              max_vocab_size=max_vocab_size)
