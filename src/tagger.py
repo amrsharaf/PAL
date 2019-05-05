@@ -119,6 +119,7 @@ class CRFTagger(object):
     # use P(yseq|xseq)
     def get_confidence(self, sent):
         sent = sent.split()
+        x = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             confidence = 0.2
