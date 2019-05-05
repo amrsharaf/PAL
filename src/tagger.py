@@ -4,7 +4,6 @@ import helpers
 import random
 import math
 import logging
-from functools import lru_cache
 
 
 # TODO Implement RNN model
@@ -15,11 +14,11 @@ class CRFTagger(object):
         self.model_file = model_file
         self.name = 'CRF'
 
+    # TODO do we need POS features? POS was commented out in previous versions of the code
     def word2features(self, sent, i):
         assert len(sent[i]) == 2
         assert type(sent[i][0] == str)
         word = sent[i][0]
-        #postag = sent[i][1]
         features = [
             'bias',
             'word.lower=' + word.lower(),
@@ -28,43 +27,35 @@ class CRFTagger(object):
             'word.isupper=%s' % word.isupper(),
             'word.istitle=%s' % word.istitle(),
             'word.isdigit=%s' % word.isdigit(),
-            #'postag=' + postag,
-            #'postag[:2]=' + postag[:2],
         ]
         if i > 0:
             word1 = sent[i - 1][0]
-            #postag1 = sent[i - 1][1]
             features.extend([
                 '-1:word.lower=' + word1.lower(),
                 '-1:word.istitle=%s' % word1.istitle(),
                 '-1:word.isupper=%s' % word1.isupper(),
-                #'-1:postag=' + postag1,
-                #'-1:postag[:2]=' + postag1[:2],
             ])
         else:
             features.append('BOS')
         if i < len(sent) - 1:
             word1 = sent[i + 1][0]
-            #postag1 = sent[i + 1][1]
             features.extend([
                 '+1:word.lower=' + word1.lower(),
                 '+1:word.istitle=%s' % word1.istitle(),
                 '+1:word.isupper=%s' % word1.isupper(),
-                #'+1:postag=' + postag1,
-                #'+1:postag[:2]=' + postag1[:2],
             ])
         else:
             features.append('EOS')
         return features
 
-#    @lru_cache(maxsize=None)
     def sent2features(self, sent):
         return [self.word2features(sent, i) for i in range(len(sent))]
 
+    # TODO change to function
     def sent2labels(self, sent):
-        # print sent
         return [label for token, label in sent]
 
+    # TODO change to function
     def sent2tokens(self, sent):
         return [token for token, label in sent]
 
@@ -122,7 +113,7 @@ class CRFTagger(object):
         sent = sent.split()
         # Add a dummy label because sent2features using this interface
         sent = [(s, '') for s in sent]
-        x = self.sent2features(sent)
+        sent = self.sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             confidence = 0.2
