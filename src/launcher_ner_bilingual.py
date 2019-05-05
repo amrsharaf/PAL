@@ -28,15 +28,14 @@ def parse_args():
 
 def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size):
     # Load data
-    print("Loading data ..")
+    print('Loading data ..')
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
     test_x, test_y, test_lens = helpers.load_data2labels(test_file)
     dev_x, dev_y, dev_lens = helpers.load_data2labels(dev_file)
-
-    print("Processing data")
+    print('Processing data')
     # build vocabulary
     max_len = max_seq_len
-    print("Max document length:", max_len)
+    print('Max document length:', max_len)
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
         max_document_length=max_len, min_frequency=1)
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
@@ -45,12 +44,10 @@ def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     vocab = vocab_processor.vocabulary_
     vocab.freeze()
     test_idx = np.array(list(vocab_processor.fit_transform(test_x)))
-
     # build embeddings
     vocab = vocab_processor.vocabulary_
     vocab_size = max_vocab_size
     w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size)
-
     # prepare story
     story = [train_x, train_y, train_idx]
     print(  "The length of the story ", len(train_x), " ( DEV = ", len(dev_x), " TEST = ", len(test_x), " )" )
@@ -88,7 +85,7 @@ def test_agent_batch(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(test_sents))
-    print(  "***TEST", performance )
+    print('***TEST', performance)
 
 
 def test_agent_online(robot, game, model, budget):
@@ -113,7 +110,6 @@ def test_agent_online(robot, game, model, budget):
             train_sents = helpers.data2sents(queried_x, queried_y)
             model.train(train_sents)
             performance.append(model.test(test_sents))
-
         reward, observation2, terminal = game.feedback(action, model)  # game
         robot.update(observation, action, reward, observation2, terminal)
     # train a crf and evaluate it
@@ -141,7 +137,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         dev = train_lang[i][2]
         emb = train_lang[i][3]
         tagger = train_lang[i][4]
-        # initilise a NER game
+        # initialize a NER game
         game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
@@ -155,13 +151,13 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
             print('>>>>>>> Current game round ', episode, 'Maximum ', max_episode)
             observation = game.get_frame(model)
             action = robot.get_action(observation)
-            print(  '> Action', action )
+            print('> Action', action)
             reward, observation2, terminal = game.feedback(action, model)
-            print(  '> Reward', reward )
+            print('> Reward', reward)
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
                 episode += 1
-                print(  '> Terminal <' )
+                print('> Terminal <')
     return robot
 
 
