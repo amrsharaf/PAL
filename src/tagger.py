@@ -6,6 +6,41 @@ import math
 import logging
 
 
+# TODO do we need POS features? POS was commented out in previous versions of the code
+def word2features(sent, i):
+    assert len(sent[i]) == 2
+    assert type(sent[i][0] == str)
+    word = sent[i][0]
+    features = [
+        'bias',
+        'word.lower=' + word.lower(),
+        'word[-3:]=' + word[-3:],
+        'word[-2:]=' + word[-2:],
+        'word.isupper=%s' % word.isupper(),
+        'word.istitle=%s' % word.istitle(),
+        'word.isdigit=%s' % word.isdigit(),
+        ]
+    if i > 0:
+        word1 = sent[i - 1][0]
+        features.extend([
+            '-1:word.lower=' + word1.lower(),
+            '-1:word.istitle=%s' % word1.istitle(),
+            '-1:word.isupper=%s' % word1.isupper(),
+            ])
+    else:
+        features.append('BOS')
+    if i < len(sent) - 1:
+        word1 = sent[i + 1][0]
+        features.extend([
+            '+1:word.lower=' + word1.lower(),
+            '+1:word.istitle=%s' % word1.istitle(),
+            '+1:word.isupper=%s' % word1.isupper(),
+            ])
+    else:
+        features.append('EOS')
+    return features
+
+
 # TODO Implement RNN model
 class CRFTagger(object):
 
@@ -14,42 +49,8 @@ class CRFTagger(object):
         self.model_file = model_file
         self.name = 'CRF'
 
-    # TODO do we need POS features? POS was commented out in previous versions of the code
-    def word2features(self, sent, i):
-        assert len(sent[i]) == 2
-        assert type(sent[i][0] == str)
-        word = sent[i][0]
-        features = [
-            'bias',
-            'word.lower=' + word.lower(),
-            'word[-3:]=' + word[-3:],
-            'word[-2:]=' + word[-2:],
-            'word.isupper=%s' % word.isupper(),
-            'word.istitle=%s' % word.istitle(),
-            'word.isdigit=%s' % word.isdigit(),
-        ]
-        if i > 0:
-            word1 = sent[i - 1][0]
-            features.extend([
-                '-1:word.lower=' + word1.lower(),
-                '-1:word.istitle=%s' % word1.istitle(),
-                '-1:word.isupper=%s' % word1.isupper(),
-            ])
-        else:
-            features.append('BOS')
-        if i < len(sent) - 1:
-            word1 = sent[i + 1][0]
-            features.extend([
-                '+1:word.lower=' + word1.lower(),
-                '+1:word.istitle=%s' % word1.istitle(),
-                '+1:word.isupper=%s' % word1.isupper(),
-            ])
-        else:
-            features.append('EOS')
-        return features
-
     def sent2features(self, sent):
-        return [self.word2features(sent, i) for i in range(len(sent))]
+        return [word2features(sent, i) for i in range(len(sent))]
 
     # TODO change to function
     def sent2labels(self, sent):
@@ -82,6 +83,7 @@ class CRFTagger(object):
 
     # different lens
     # TODO can we refactor the sent2features better to avoid similar bugs in the future?
+    # TODO review this function to make sure it's doing the right thing!
     def get_predictions(self, sent):
         sent = sent.split()
         # use the same interface sent2features expects
