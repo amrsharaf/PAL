@@ -9,6 +9,7 @@ from tagger import CRFTagger
 import logging
 import tagger
 
+
 # TODO call by reference global variables!
 def parse_args():
     parser = argparse.ArgumentParser()

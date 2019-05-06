@@ -160,6 +160,7 @@ class CRFTagger(object):
     def test(self, X_test, Y_true):
         tagger = pycrfsuite.Tagger()
         tagger.open(self.model_file)
+        # TODO this list comprehension is so slow, can we make it faster?
         y_pred = [tagger.tag(xseq) for xseq in X_test]
         pre = 0
         pre_tot = 0
