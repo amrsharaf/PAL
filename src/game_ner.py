@@ -1,5 +1,6 @@
 import random
 import helpers
+import tagger
 import logging
 
 
@@ -14,6 +15,9 @@ class NERGame:
         self.test_x, self.test_y, self.test_idx = test
         self.dev_x, self.dev_y, self.dev_idx = dev
         self.test_sents = helpers.data2sents(self.dev_x, self.dev_y)
+        # TODO this should be a function
+        self.X_test = [tagger.sent2features(s) for s in self.test_sents]
+        self.Y_true = [tagger.sent2labels(s) for s in self.test_sents]
         self.max_len = max_len
         self.w2v = w2v
 
@@ -146,7 +150,7 @@ class NERGame:
         # logging.info train_sents
         tagger.train(train_sents)
         # test on development data
-        performance = tagger.test(self.test_sents)
+        performance = tagger.test(self.X_test, self.Y_true)
         # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
         return performance
 

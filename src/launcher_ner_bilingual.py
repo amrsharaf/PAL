@@ -7,7 +7,7 @@ import helpers
 import tensorflow as tf
 from tagger import CRFTagger
 import logging
-
+import tagger
 
 # TODO call by reference global variables!
 def parse_args():
@@ -65,6 +65,8 @@ def test_agent_batch(robot, game, model, budget):
     queried_y = []
     performance = []
     test_sents = helpers.data2sents(game.test_x, game.test_y)
+    X_test = [tagger.sent2features(s) for s in test_sents]
+    Y_true = [tagger.sent2labels(s) for s in test_sents]
     game.reboot()
     while i < budget:
         sel_ind = game.current_frame
@@ -79,12 +81,12 @@ def test_agent_batch(robot, game, model, budget):
             i += 1
             train_sents = helpers.data2sents(queried_x, queried_y)
             model.train(train_sents)
-            performance.append(model.test(test_sents))
+            performance.append(model.test(X_test, Y_true))
         game.current_frame += 1
     # train a crf and evaluate it
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
-    performance.append(model.test(test_sents))
+    performance.append(model.test(X_test, Y_true))
     logging.info('***TEST {0}'.format(performance))
 
 
@@ -95,6 +97,8 @@ def test_agent_online(robot, game, model, budget):
     queried_y = []
     performance = []
     test_sents = helpers.data2sents(game.test_x, game.test_y)
+    X_test = [tagger.sent2features(s) for s in test_sents]
+    Y_true = [tagger.sent2labels(s) for s in test_sents]
     game.reboot()
     while i < budget:
         sel_ind = game.current_frame
@@ -109,13 +113,13 @@ def test_agent_online(robot, game, model, budget):
             i += 1
             train_sents = helpers.data2sents(queried_x, queried_y)
             model.train(train_sents)
-            performance.append(model.test(test_sents))
+            performance.append(model.test(X_test, Y_true))
         reward, observation2, terminal = game.feedback(action, model)  # game
         robot.update(observation, action, reward, observation2, terminal)
     # train a crf and evaluate it
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
-    performance.append(model.test(test_sents))
+    performance.append(model.test(X_test, Y_true))
     logging.info('***TEST {0}'.format(performance))
 
 

@@ -157,9 +157,7 @@ class CRFTagger(object):
             ttk += ent
         return ttk
 
-    def test(self, test_sents):
-        X_test = [sent2features(s) for s in test_sents]
-        Y_true = [sent2labels(s) for s in test_sents]
+    def test(self, X_test, Y_true):
         tagger = pycrfsuite.Tagger()
         tagger.open(self.model_file)
         y_pred = [tagger.tag(xseq) for xseq in X_test]
