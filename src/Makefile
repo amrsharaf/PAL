@@ -13,6 +13,9 @@ main_nl:
 main_en:
 	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10000 --budget 200 --train "data/conll2003/en.train;data/conll2003/en.testa;data/conll2003/en.testb;data/embeddings/cca/en.emb;models/en.model.saved" --test "data/conll2003/de.train;data/conll2003/de.testa;data/conll2003/de.testb;data/embeddings/cca/de.emb;models/de.model.saved" --embedding_size 40
 
+main_en_gpu:
+	python launcher_ner_bilingual.py --agent "CNNDQN" --episode 10000 --budget 200 --train "/scratch0/PAL/conll2003/en.train;/scratch0/PAL/conll2003/en.testa;/scratch0/PAL/conll2003/en.testb;/scratch0/PAL/embeddings/cca/en.emb;/scratch0/PAL/models/en.model.saved" --test "/scratch0/PAL/conll2003/de.train;/scratch0/PAL/conll2003/de.testa;/scratch0/PAL/conll2003/de.testb;/scratch0/PAL/embeddings/cca/de.emb;/scratch0/PAL/models/de.model.saved" --embedding_size 40
+
 split:
 	python split_embedddings.py --language nl --input_path data/embeddings/CCA/fifty_nine.table5.multiCCA.size_40.normalized --output_path data/embeddings/CCA/nl.emb
 
