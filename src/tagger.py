@@ -41,6 +41,14 @@ def word2features(sent, i):
     return features
 
 
+def sent2features(sent):
+    return [word2features(sent, i) for i in range(len(sent))]
+
+
+def sent2labels(sent):
+    return [label for token, label in sent]
+
+
 # TODO Implement RNN model
 class CRFTagger(object):
 
@@ -49,20 +57,14 @@ class CRFTagger(object):
         self.model_file = model_file
         self.name = 'CRF'
 
-    def sent2features(self, sent):
-        return [word2features(sent, i) for i in range(len(sent))]
-
-    # TODO change to function
-    def sent2labels(self, sent):
-        return [label for token, label in sent]
 
     # TODO change to function
     def sent2tokens(self, sent):
         return [token for token, label in sent]
 
     def train(self, train_sents):
-        X_train = [self.sent2features(s) for s in train_sents]
-        Y_train = [self.sent2labels(s) for s in train_sents]
+        X_train = [sent2features(s) for s in train_sents]
+        Y_train = [sent2labels(s) for s in train_sents]
         trainer = pycrfsuite.Trainer(verbose=False)
         for xseq, yseq in zip(X_train, Y_train):
             trainer.append(xseq, yseq)
@@ -88,7 +90,7 @@ class CRFTagger(object):
         sent = sent.split()
         # use the same interface sent2features expects
         sent = [(s, '') for s in sent]
-        sent = self.sent2features(sent)
+        sent = sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             y_marginals = []
@@ -116,7 +118,7 @@ class CRFTagger(object):
         sent = sent.split()
         # Add a dummy label because sent2features using this interface
         sent = [(s, '') for s in sent]
-        sent = self.sent2features(sent)
+        sent = sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             confidence = 0.2
@@ -133,7 +135,7 @@ class CRFTagger(object):
         sent = sent.split()
         # use the same interface sent2features expects
         sent = [(s, '') for s in sent]
-        x = self.sent2features(sent)
+        x = sent2features(sent)
         tagger = pycrfsuite.Tagger()
         if not os.path.isfile(self.model_file):
             unc = random.random()
@@ -156,8 +158,8 @@ class CRFTagger(object):
         return ttk
 
     def test(self, test_sents):
-        X_test = [self.sent2features(s) for s in test_sents]
-        Y_true = [self.sent2labels(s) for s in test_sents]
+        X_test = [sent2features(s) for s in test_sents]
+        Y_true = [sent2labels(s) for s in test_sents]
         tagger = pycrfsuite.Tagger()
         tagger.open(self.model_file)
         y_pred = [tagger.tag(xseq) for xseq in X_test]
