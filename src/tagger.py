@@ -6,7 +6,8 @@ import math
 import logging
 
 
-# TODO do we need POS features? POS was commented out in previous versions of the code
+# TODO do we need POS features?
+# POS was commented out in previous versions of the code
 def word2features(sent, i):
     assert len(sent[i]) == 2
     assert type(sent[i][0] == str)
@@ -49,12 +50,29 @@ def sent2labels(sent):
     return [label for token, label in sent]
 
 
-# TODO seems like this function is not used
+# TODO seems like this function is not used!
 def sent2tokens(sent):
     return [token for token, label in sent]
 
 
 # TODO Implement RNN model
+class RNNTagger(object):
+    def __init__(self):
+        assert False
+
+    def train(self, queried_set_idx, queried_set_y):
+        assert False
+
+    def test(self, dev_idx, dev_y):
+        assert False
+
+    def get_confidence(self, sentence_idx):
+        assert False
+
+    def get_predictions(self, sentence_idx):
+        assert False
+
+
 class CRFTagger(object):
 
     def __init__(self, model_file):
@@ -79,7 +97,7 @@ class CRFTagger(object):
         if len(trainer.logparser.iterations) != 0:
             logging.info('{} {}'.format(len(trainer.logparser.iterations), trainer.logparser.iterations[-1]))
         else:
-            # todo
+            # TODO
             logging.info(len(trainer.logparser.iterations))
             logging.info('There is no loss to present')
 
