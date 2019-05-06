@@ -8,6 +8,7 @@ import tensorflow as tf
 from tagger import CRFTagger
 import logging
 import tagger
+import os
 
 
 # TODO call by reference global variables!
@@ -202,7 +203,7 @@ def set_logger(log_path):
 
 def construct_languages(all_langs):
     # load the train data: source languages
-    parts = all_langs.split(";")
+    parts = all_langs.split(',')
     train_lang_num = int(len(parts) / 5)
     if len(parts) % 5 != 0:
         logging.info('Wrong inputs of training')
@@ -223,6 +224,7 @@ def main():
     args = parse_args()
     logging.info('got args: ')
     logging.info(args)
+    print('args: ', args)
     set_logger(args.log_path)
     budget = int(args.budget)
     train_lang = construct_languages(args.train)
@@ -241,4 +243,5 @@ def main():
 
 
 if __name__ == '__main__':
+    print('working directory: ', os.getcwd())
     main()
