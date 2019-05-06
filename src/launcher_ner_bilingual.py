@@ -6,6 +6,7 @@ import numpy as np
 import helpers
 import tensorflow as tf
 from tagger import CRFTagger
+from tagger import RNNTagger
 import logging
 import tagger
 import os
@@ -26,6 +27,8 @@ def parse_args():
     # Embedding size
     parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
     parser.add_argument('--log_path', type=str, required=False, default='log.txt', help='log file path')
+    # model name
+    parser.add_argument('--model_name', type=str, default='CRF', help='model name')
     return parser.parse_args()
 
 
@@ -126,7 +129,7 @@ def test_agent_online(robot, game, model, budget):
 
 
 def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode,
-             emb_size):
+             emb_size, model_name):
     actions = 2
     if agent == 'random':
         # TODO Implement this
@@ -155,7 +158,15 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
         # tagger
-        model = CRFTagger(tagger)
+        if model_name == 'CRF':
+            model = CRFTagger(tagger)
+        elif model_name == 'RNN':
+            # TODO what is tagger?!
+            model = RNNTagger(tagger)
+        else:
+            logging.info('Invalid model type')
+            assert False
+
         # play game
         episode = 1
         logging.info('>>>>>> Playing game ..')
@@ -173,7 +184,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
     return robot
 
 
-def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size, emb_size):
+def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size, emb_size, model_name):
     for i in range(test_lang_num):
         train = test_lang[i][0]
         test = test_lang[i][1]
@@ -233,13 +244,14 @@ def main():
     max_seq_len = args.max_seq_len
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
+    model_name = args.model_name
     # play games for training a robot
     robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     max_episode=args.episode, emb_size=embedding_size)
+                     max_episode=args.episode, emb_size=embedding_size, model_name=model_name)
     # play a new game with the trained robot
     run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
-             max_vocab_size=max_vocab_size, emb_size=embedding_size)
+             max_vocab_size=max_vocab_size, emb_size=embedding_size, model_name=model_name)
 
 
 if __name__ == '__main__':

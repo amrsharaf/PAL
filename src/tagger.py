@@ -58,7 +58,7 @@ def sent2tokens(sent):
 # TODO Implement RNN model
 class RNNTagger(object):
     def __init__(self):
-        assert False
+        self.name = 'RNN'
 
     def train(self, queried_set_idx, queried_set_y):
         assert False
