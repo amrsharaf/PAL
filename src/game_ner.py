@@ -13,6 +13,7 @@ class NERGame:
         self.train_x, self.train_y, self.train_idx = story
         self.test_x, self.test_y, self.test_idx = test
         self.dev_x, self.dev_y, self.dev_idx = dev
+        self.test_sents = helpers.data2sents(self.dev_x, self.dev_y)
         self.max_len = max_len
         self.w2v = w2v
 
@@ -145,8 +146,7 @@ class NERGame:
         # logging.info train_sents
         tagger.train(train_sents)
         # test on development data
-        test_sents = helpers.data2sents(self.dev_x, self.dev_y)
-        performance = tagger.test(test_sents)
+        performance = tagger.test(self.test_sents)
         # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
         return performance
 
