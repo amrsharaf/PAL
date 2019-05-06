@@ -49,6 +49,11 @@ def sent2labels(sent):
     return [label for token, label in sent]
 
 
+# TODO seems like this function is not used
+def sent2tokens(sent):
+    return [token for token, label in sent]
+
+
 # TODO Implement RNN model
 class CRFTagger(object):
 
@@ -56,11 +61,6 @@ class CRFTagger(object):
         logging.info('CRF Tagger')
         self.model_file = model_file
         self.name = 'CRF'
-
-
-    # TODO change to function
-    def sent2tokens(self, sent):
-        return [token for token, label in sent]
 
     def train(self, train_sents):
         X_train = [sent2features(s) for s in train_sents]
