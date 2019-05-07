@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import random
+import logging
 from collections import deque
 
 # Hyper Parameters:
@@ -135,12 +136,12 @@ class RobotCNNDQN:
         self.time_step += 1
 
     def get_action(self, observation):
-        print("DQN is smart.")
+        logging.info('DQN is smart.')
         self.current_state = observation
         sent, confidence, predictions = self.current_state
         # print sent, confidence, predictions
-        qvalue = self.sess.run(self.qvalue, feed_dict={self.sent: [
-                               sent], self.state_confidence: [confidence], self.predictions: [predictions]})[0]
+        qvalue = self.sess.run(self.qvalue, feed_dict={self.sent: [sent], self.state_confidence: [confidence],
+                                                       self.predictions: [predictions]})[0]
 
         action = np.zeros(self.action)
         action_index = 0
