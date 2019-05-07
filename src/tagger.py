@@ -7,7 +7,11 @@ import random
 import math
 import logging
 import tensorflow as tf
+import numpy as np
+import os
 
+# TODO fix this
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 # TODO do we need POS features?
 # POS was commented out in previous versions of the code
@@ -117,8 +121,27 @@ class RNNTagger(object):
         logging.info('RNN Tagger')
         self.model_file = model_file
         self.name = 'RNN'
+        # Untrained model
+        self.model = None
 
     def train(self, idx, y):
+        logging.info('starting training...')
+        # keras implementation
+        # TODO this should be a parameter
+        max_len = 120
+        input = Input(shape=(max_len,))
+        # TODO this should be a parameter
+        n_words = 20000
+        model = Embedding(input_dim=n_words, output_dim=40, input_length=max_len)(input)
+        model = Dropout(0.1)(model)
+        n_units = 128
+        model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
+        n_tags = 5
+        out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
+        self.model = Model(input, out)
+        self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics='accuracy')
+        # TODO do we need a validation split?
+        self.model.fit(idx, y, batch_size=32, epochs=5, verbose=1)
         # After defining the model, we run training steps by passing in batched inputs. we use TensorFlow Estimator API
         # to train the model.
         # TODO set model_dir to avoid the creation of a temporary directory
@@ -133,14 +156,22 @@ class RNNTagger(object):
         print('got features: ', features)
         print('labels: ', labels)
         # Forward prop to get the predictions
-        seq2seq_model(features=features, labels=labels, mode=tf.estimator.ModeKeys.PREDICT, params=None)
+        if self.model is None:
+            return None
+        else:
+            predictions = self.model.predict(features)
         assert False
 
     def get_confidence(self, sentence_idx):
-        print('got sentence_idx: ', sentence_idx)
-        # TODO do we need to load a model from a file every time we make a prediction?
-        self.test(idx=sentence_idx, y=None)
-        assert False
+        if self.model is None:
+            # We haven't trained anything yet!
+            return [0.2]
+        else:
+            print('got sentence_idx: ', sentence_idx)
+            # TODO do we need to load a model from a file every time we make a prediction?
+            prediction = self.test(idx=sentence_idx, y=None)
+            print('got prediction: ', prediction)
+            assert False
 #        sent = sent2features(sent)
 #        tagger = pycrfsuite.Tagger()
 #        if not os.path.isfile(self.model_file):
@@ -153,7 +184,25 @@ class RNNTagger(object):
 #        confidence = pow(p_y_pred, 1. / len(y_pred))
 #        return [confidence]
 
-    def get_predictions(self, sentence_idx):
+    def get_predictions(self, features):
+        print('got features: ', features)
+        if self.model is None:
+            print('we have not trained anything yet')
+            y_marginals = []
+            # TODO compute sentence length correctly
+            # TODO replace zero with the padding token
+            sentence_length = np.sum(features != 0)
+            # TODO this should be a parameter
+            n_tags = 5
+            # TODO can use numpy to make this faster
+            for i in range(sentence_length):
+                y_i = []
+                for y in range(n_tags):
+                    y_i.append(0.2)
+                y_marginals.append(y_i)
+            return y_marginals
+        else:
+            print('the model has been trained!')
         assert False
 
 
@@ -201,6 +250,7 @@ class CRFTagger(object):
             return y_marginals
         tagger.open(self.model_file)
         tagger.set(sent)
+        # TODO this should be a function
         y_marginals = []
         # print "Tagset", tagger.labels()
         # ['1', '2', '3', '4', '5']
