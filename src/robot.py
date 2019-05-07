@@ -49,7 +49,6 @@ class RobotCNNDQN:
         self.process_sentence()
         self.state_confidence = tf.placeholder(tf.float32, [None, 1], name="input_confidence")
         self.process_prediction()
-
         # network weights
         # size of a sentence = 384
         self.w_fc1_s = self.weight_variable([384, 256])
@@ -58,7 +57,6 @@ class RobotCNNDQN:
         self.b_fc1 = self.bias_variable([256])
         self.w_fc2 = self.weight_variable([256, self.action])
         self.b_fc2 = self.bias_variable([self.action])
-
         # hidden layers
         self.h_fc1_all = tf.nn.relu(tf.matmul(self.state_content, self.w_fc1_s) + tf.matmul(
             self.state_marginals, self.w_fc1_p) + tf.matmul(self.state_confidence, self.w_fc1_c) + self.b_fc1)
@@ -69,8 +67,7 @@ class RobotCNNDQN:
         # reword input
         self.y_input = tf.placeholder("float", [None])
 
-        q_action = tf.reduce_sum(
-            tf.multiply(self.qvalue, self.action_input), reduction_indices=1)
+        q_action = tf.reduce_sum(tf.multiply(self.qvalue, self.action_input), reduction_indices=1)
         # error function
         self.cost = tf.reduce_mean(tf.square(self.y_input - q_action))
         # train method
@@ -81,7 +78,7 @@ class RobotCNNDQN:
         self.sess.run(tf.global_variables_initializer())
 
     def train_qnetwork(self):
-        # Step 1: obtain random minibatch from replay memory
+        # Step 1: obtain random mini-batch from replay memory
         minibatch = random.sample(self.replay_memory, BATCH_SIZE)
         state_batch = [data[0] for data in minibatch]
         action_batch = [data[1] for data in minibatch]
@@ -105,8 +102,7 @@ class RobotCNNDQN:
             if terminal:
                 y_batch.append(reward_batch[i])
             else:
-                y_batch.append(reward_batch[i] +
-                               GAMMA * np.max(qvalue_batch[i]))
+                y_batch.append(reward_batch[i] + GAMMA * np.max(qvalue_batch[i]))
         sent_batch = []
         confidence_batch = []
         predictions_batch = []
@@ -126,7 +122,6 @@ class RobotCNNDQN:
 
     def update(self, observation, action, reward, observation2, terminal):
         self.current_state = observation
-        #newState = observation2
         new_state = observation2
         self.replay_memory.append(
             (self.current_state, action, reward, new_state, terminal))
@@ -136,7 +131,6 @@ class RobotCNNDQN:
         if self.time_step > OBSERVE:
             # Train the network
             self.train_qnetwork()
-
         self.current_state = new_state
         self.time_step += 1
 
@@ -163,7 +157,6 @@ class RobotCNNDQN:
         # change episilon
         if self.epsilon > FINAL_EPSILON and self.time_step > OBSERVE:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
-
         return action
 
     def weight_variable(self, shape):
@@ -181,109 +174,101 @@ class RobotCNNDQN:
         filter_sizes = [3, 4, 5]
         num_filters = 128
 
-        self.sent = tf.placeholder(
-            tf.int32, [None, seq_len], name="input_x")
+        self.sent = tf.placeholder(tf.int32, [None, seq_len], name='input_x')
         # dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
         dropout_keep_prob = 0.5
         # Keeping track of l2 regularization loss (optional)
         l2_loss = tf.constant(0.0)
 
         # embedding layer
-        with tf.device('/cpu:0'), tf.name_scope("embedding"):
+        with tf.device('/cpu:0'), tf.name_scope('embedding'):
             # is able to train
             self.w = tf.Variable(tf.random_uniform(
-                [self.vocab_size, embedding_size], -1.0, 1.0), trainable=False, name="W")
-            self.embedded_chars = tf.nn.embedding_lookup(
-                self.w, self.sent)
-            self.embedded_chars_expanded = tf.expand_dims(
-                self.embedded_chars, -1)
+                [self.vocab_size, embedding_size], -1.0, 1.0), trainable=False, name='W')
+            self.embedded_chars = tf.nn.embedding_lookup(self.w, self.sent)
+            self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
 
         pooled_outputs = []
         for i, filter_size in enumerate(filter_sizes):
-            with tf.name_scope("conv-maxpool-%s" % filter_size):
+            with tf.name_scope('conv-maxpool-%s' % filter_size):
                 # Convolution Layer
                 filter_shape = [filter_size, embedding_size, 1, num_filters]
                 W = tf.Variable(tf.truncated_normal(
-                    filter_shape, stddev=0.1), name="W")
-                b = tf.Variable(tf.constant(
-                    0.1, shape=[num_filters]), name="b")
+                    filter_shape, stddev=0.1), name='W')
+                b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name='b')
                 conv = tf.nn.conv2d(
                     self.embedded_chars_expanded,
                     W,
                     strides=[1, 1, 1, 1],
-                    padding="VALID",
-                    name="conv")
+                    padding='VALID',
+                    name='conv')
                 # Apply nonlinearity
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+                h = tf.nn.relu(tf.nn.bias_add(conv, b), name='relu')
                 # Maxpooling over the outputs
                 pooled = tf.nn.max_pool(
                     h,
                     ksize=[1, seq_len - filter_size + 1, 1, 1],
                     strides=[1, 1, 1, 1],
                     padding='VALID',
-                    name="pool")
+                    name='pool')
                 pooled_outputs.append(pooled)
         # Combine all the pooled features
         num_filters_total = num_filters * len(list(filter_sizes))
         h_pool = tf.concat(pooled_outputs, 3)
         h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
         # Add dropout
-        with tf.name_scope("dropout"):
+        with tf.name_scope('dropout'):
             self.state_content = tf.nn.dropout(h_pool_flat, dropout_keep_prob)
 
     def process_prediction(self):
         seq_len = self.max_len
         num_classes = self.num_classes
         # Placeholder for input
-        self.predictions = tf.placeholder(
-            tf.float32, [None, seq_len, num_classes], name="input_predictions")
+        self.predictions = tf.placeholder(tf.float32, [None, seq_len, num_classes], name='input_predictions')
         filter_sizes = [3]
         num_filters = 20
-        self.predictions_expanded = tf.expand_dims(
-            self.predictions, -1)
+        self.predictions_expanded = tf.expand_dims(self.predictions, -1)
         dropout_keep_prob = 0.5
 
         pooled_outputs = []
         for i, filter_size in enumerate(filter_sizes):
-            with tf.name_scope("conv-maxpool-%s" % filter_size):
+            with tf.name_scope('conv-maxpool-%s' % filter_size):
                 # Convolution Layer
                 filter_shape = [filter_size, num_classes, 1, num_filters]
                 W = tf.Variable(tf.truncated_normal(
-                    filter_shape, stddev=0.1), name="W")
-                b = tf.Variable(tf.constant(
-                    0.1, shape=[num_filters]), name="b")
+                    filter_shape, stddev=0.1), name='W')
+                b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name='b')
                 conv = tf.nn.conv2d(
                     self.predictions_expanded,
                     W,
                     strides=[1, 1, 1, 1],
-                    padding="VALID",
-                    name="conv")
-                # Apply nonlinearity
-                #h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+                    padding='VALID',
+                    name='conv')
+                # Apply non-linearity
+                # h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
                 h = conv
-                # averagepooling over the outputs
+                # average pooling over the outputs
                 pooled = tf.nn.avg_pool(
                     h,
                     ksize=[1, seq_len - filter_size + 1, 1, 1],
                     strides=[1, 1, 1, 1],
                     padding='VALID',
-                    name="pool")
+                    name='pool')
                 pooled_outputs.append(pooled)
         # Combine all the pooled features
         num_filters_total = num_filters * len(list(filter_sizes))
         ph_pool = tf.concat(pooled_outputs, 3)
         ph_pool_flat = tf.reshape(ph_pool, [-1, num_filters_total])
         # Add dropout
-        with tf.name_scope("dropout"):
-            self.state_marginals = tf.nn.dropout(
-                ph_pool_flat, dropout_keep_prob)
+        with tf.name_scope('dropout'):
+            self.state_marginals = tf.nn.dropout(ph_pool_flat, dropout_keep_prob)
 
     def update_embeddings(self, embeddings):
         self.w_embeddings = embeddings
         self.vocab_size = len(self.w_embeddings)
         self.embedding_size = len(self.w_embeddings[0])
-        print(  "Assigning new word embeddings" )
-        print(  "New size", self.vocab_size )
+        print('Assigning new word embeddings')
+        print('New size', self.vocab_size)
         self.sess.run(self.w.assign(self.w_embeddings))
         self.time_step = 0
         self.replay_memory = deque()
