@@ -128,6 +128,18 @@ def test_agent_online(robot, game, model, budget):
     logging.info('***TEST {0}'.format(performance))
 
 
+def build_model(model_name, model_file):
+    if model_name == 'CRF':
+        model = CRFTagger(model_file=model_file)
+    elif model_name == 'RNN':
+        # TODO what is tagger?!
+        model = RNNTagger(model_file=model_file)
+    else:
+        logging.error('Invalid model type')
+        assert False
+    return model
+
+
 def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode,
              emb_size, model_name):
     actions = 2
@@ -150,7 +162,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         test = train_lang[i][1]
         dev = train_lang[i][2]
         emb = train_lang[i][3]
-        tagger = train_lang[i][4]
+        model_file = train_lang[i][4]
         # initialize a NER game
         game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                emb_size=emb_size)
@@ -158,25 +170,17 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
         # tagger
-        if model_name == 'CRF':
-            model = CRFTagger(tagger)
-        elif model_name == 'RNN':
-            # TODO what is tagger?!
-            model = RNNTagger(tagger)
-        else:
-            logging.info('Invalid model type')
-            assert False
-
+        model = build_model(model_name=model_name, model_file=model_file)
         # play game
         episode = 1
         logging.info('>>>>>> Playing game ..')
         while episode <= max_episode:
-            logging.info('>>>>>>> Current game round {0} Maximum  {1}'.format(episode, max_episode))
+            logging.info('>>>>>>> Current game round {} Maximum  {}'.format(episode, max_episode))
             observation = game.get_frame(model)
             action = robot.get_action(observation)
-            logging.info('> Action {0}'.format(action))
+            logging.info('> Action {}'.format(action))
             reward, observation2, terminal = game.feedback(action, model)
-            logging.info('> Reward {0}'.format(reward))
+            logging.info('> Reward {}'.format(reward))
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
                 episode += 1
@@ -190,11 +194,11 @@ def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_siz
         test = test_lang[i][1]
         dev = test_lang[i][2]
         emb = test_lang[i][3]
-        tagger = test_lang[i][4]
+        model_file = test_lang[i][4]
         game2 = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                 emb_size=emb_size)
         robot.update_embeddings(game2.w2v)
-        model = CRFTagger(tagger)
+        model = build_model(model_name=model_name, model_file=model_file)
         test_agent_batch(robot, game2, model, budget)
         test_agent_online(robot, game2, model, budget)
 

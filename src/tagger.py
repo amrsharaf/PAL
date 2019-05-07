@@ -57,17 +57,37 @@ def sent2tokens(sent):
 
 # TODO Implement RNN model
 class RNNTagger(object):
-    def __init__(self):
+    def __init__(self, model_file):
+        logging.info('RNN Tagger')
+        self.model_file = model_file
         self.name = 'RNN'
 
     def train(self, queried_set_idx, queried_set_y):
         assert False
 
-    def test(self, dev_idx, dev_y):
+    def test(self, idx, y):
+        print('inside test...')
+        print('got idx: ', idx)
+        print('y: ', y)
+        # Forward prop to get the predictions
         assert False
 
     def get_confidence(self, sentence_idx):
+        print('got sentence_idx: ', sentence_idx)
+        # TODO do we need to load a model from a file every time we make a prediction?
+        self.test(idx=sentence_idx, y=None)
         assert False
+#        sent = sent2features(sent)
+#        tagger = pycrfsuite.Tagger()
+#        if not os.path.isfile(self.model_file):
+#            confidence = 0.2
+#            return [confidence]
+#        tagger.open(self.model_file)
+#        tagger.set(sent)
+#        y_pred = tagger.tag()
+#        p_y_pred = tagger.probability(y_pred)
+#        confidence = pow(p_y_pred, 1. / len(y_pred))
+#        return [confidence]
 
     def get_predictions(self, sentence_idx):
         assert False
