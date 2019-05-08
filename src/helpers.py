@@ -54,10 +54,10 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_si
         for i in range(1, len(parts)):
             vec.append(float(parts[i]))
         pre_w2v[w] = vec
-    n_dict = len(vocab._mapping)
-    vocab_w2v = [None] * n_dict
+    n_dict = len(vocab)
+    vocab_w2v = np.zeros((n_dict, emb_size))
     # vocab_w2v[0]=np.random.uniform(-0.25,0.25,100)
-    for w, i in vocab._mapping.items():
+    for w, i in vocab.items():
         if w in pre_w2v:
             vocab_w2v[i] = pre_w2v[w]
         else:

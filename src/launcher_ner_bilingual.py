@@ -10,7 +10,7 @@ from tagger import RNNTagger
 import logging
 import tagger
 import os
-
+from keras.preprocessing.sequence import pad_sequences
 
 # TODO call by reference global variables!
 def parse_args():
@@ -46,13 +46,18 @@ def get_unique_words(sentences):
     return words_set
 
 
-def sentences_to_idx(sentences, word_to_idx):
-    return [[word_to_idx[w] for w in s.split()]for s in sentences]
+def sentences_to_idx(sentences, word_to_idx, max_len, pad_value):
+    unpadded_sequence = [[word_to_idx[w] for w in s.split()]for s in sentences]
+    padded_sequence = pad_sequences(maxlen=max_len, sequences=unpadded_sequence, padding='post', value=pad_value)
+    return padded_sequence
 
 
 # Returns ndarray mapping every word to an index
 # TODO handle unk, for now we assume we know the full vocab, so no unk?
-def process_vocabulary(train_sentences, dev_sentences, test_sentences):
+# TODO create a reverse index!
+# TODO can we make this faster?
+# TODO handle tags and padding for tags
+def process_vocabulary(train_sentences, dev_sentences, test_sentences, max_len):
     # assert correct train data
     assert_list_of_sentences(train_sentences)
     # assert correct dev data
@@ -63,15 +68,14 @@ def process_vocabulary(train_sentences, dev_sentences, test_sentences):
     words = get_unique_words(train_sentences).union(get_unique_words(dev_sentences)).union(
         get_unique_words(test_sentences))
     n_words = len(words)
-    logging.info('number of unique words: ', n_words)
-    word_to_idx = {w: i+1 for i, w in enumerate(words)}
-    # TODO can we make this faster?
-    train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx)
-    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx)
-    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx)
-    # TODO handle padding
-    assert False
-    return train_idx, dev_idx, test_idx
+    logging.info('number of unique words: {}'.format(n_words))
+    word_to_idx = {w: i for i, w in enumerate(words)}
+    pad_value = n_words
+    train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx, max_len=max_len,
+                                 pad_value=pad_value)
+    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value)
+    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value)
+    return {'train_idx': train_idx, 'dev_idx': dev_idx, 'test_idx': test_idx, 'vocab': word_to_idx}
 
 
 def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
@@ -85,16 +89,14 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     max_len = max_seq_len
     logging.info('Max document length: {}'.format(max_len))
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
-    train_idx, dev_idx, test_idx = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x,
-                                                      test_sentences=test_x)
-#    train_idx = np.array(list(vocab_processor.fit_transform(train_x)))
-#    dev_idx = np.array(list(vocab_processor.fit_transform(dev_x)))
-#    vocab = vocab_processor.vocabulary_
-#    vocab.freeze()
-#    test_idx = np.array(list(vocab_processor.fit_transform(test_x)))
-#    # build embeddings
-#    vocab = vocab_processor.vocabulary_
-#    vocab_size = max_vocab_size
+    vocab_dict = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x, test_sentences=test_x, max_len=max_seq_len)
+    train_idx = vocab_dict['train_idx']
+    dev_idx = vocab_dict['dev_idx']
+    test_idx = vocab_dict['test_idx']
+    vocab = vocab_dict['vocab']
+    # TODO enforce maximum vocabulary size!!!
+    # build embeddings
+    vocab_size = len(vocab)
     w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size, emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx]
@@ -209,7 +211,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         # initialize a NER game
         game = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                emb_size=emb_size)
-        # initialise a decision robot
+        # initialize a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
         # tagger
