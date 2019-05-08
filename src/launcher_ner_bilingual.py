@@ -32,7 +32,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def initialise_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
+def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
     logging.info('Loading data ..')
     train_x, train_y, train_lens = helpers.load_data2labels(train_file)
@@ -164,7 +164,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         emb = train_lang[i][3]
         model_file = train_lang[i][4]
         # initialize a NER game
-        game = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
+        game = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                emb_size=emb_size)
         # initialise a decision robot
         # robot.initialise(game.max_len, game.w2v)
@@ -195,7 +195,7 @@ def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_siz
         dev = test_lang[i][2]
         emb = test_lang[i][3]
         model_file = test_lang[i][4]
-        game2 = initialise_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
+        game2 = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                 emb_size=emb_size)
         robot.update_embeddings(game2.w2v)
         model = build_model(model_name=model_name, model_file=model_file)
