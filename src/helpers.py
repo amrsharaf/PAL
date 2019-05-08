@@ -40,6 +40,7 @@ def remove_language_prefix(embedding):
 
 
 # TODO pickle the output of this function to make the performance faster
+# TODO optimize the runtime pefromance of this function
 def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_size=40):
     embeddings = list(open(input_file, "r", encoding="utf-8").readlines())
     # Pre-process to remove the language prefix
@@ -55,21 +56,15 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_si
             vec.append(float(parts[i]))
         pre_w2v[w] = vec
     n_dict = len(vocab)
-    vocab_w2v = np.zeros((n_dict, emb_size))
-    # vocab_w2v[0]=np.random.uniform(-0.25,0.25,100)
+    if n_dict > max_vocab_size:
+        print('Vocabulary size is larger than ', max_vocab_size)
+        raise SystemExit
+    vocab_w2v = np.zeros((max_vocab_size, emb_size))
     for w, i in vocab.items():
         if w in pre_w2v:
             vocab_w2v[i] = pre_w2v[w]
         else:
             vocab_w2v[i] = list(np.random.uniform(-0.25, 0.25, emb_size))
-    cur_i = len(vocab_w2v)
-    if len(vocab_w2v) > max_vocab_size:
-        print('Vocabulary size is larger than ', max_vocab_size)
-        raise SystemExit
-    while cur_i < max_vocab_size:
-        cur_i += 1
-        padding = [0] * emb_size
-        vocab_w2v.append(padding)
     logging.info('Vocabulary {} Embedding size {}'.format(n_dict, emb_size))
     return vocab_w2v
 

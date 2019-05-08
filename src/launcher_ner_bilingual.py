@@ -1,3 +1,4 @@
+import operator
 import sys
 import argparse
 from game_ner import NERGame
@@ -11,6 +12,8 @@ import logging
 import tagger
 import os
 from keras.preprocessing.sequence import pad_sequences
+from collections import defaultdict
+from itertools import chain
 
 # TODO call by reference global variables!
 def parse_args():
@@ -38,43 +41,54 @@ def assert_list_of_sentences(sentences):
     assert type(sentences[0]) == str
 
 
-def get_unique_words(sentences):
-    words_set = set()
+def get_word_frequencies(sentences):
+    words_dict = defaultdict(lambda: 0)
     for sentence in sentences:
         for word in sentence.split():
-            words_set.add(word)
-    return words_set
+            words_dict[word] = words_dict[word] + 1
+    return words_dict
 
 
-def sentences_to_idx(sentences, word_to_idx, max_len, pad_value):
-    unpadded_sequence = [[word_to_idx[w] for w in s.split()]for s in sentences]
+def sentences_to_idx(sentences, word_to_idx, max_len, pad_value, unk_value):
+    unpadded_sequence = [[word_to_idx[w] if w in word_to_idx else unk_value for w in s.split()]for s in sentences]
     padded_sequence = pad_sequences(maxlen=max_len, sequences=unpadded_sequence, padding='post', value=pad_value)
     return padded_sequence
 
 
 # Returns ndarray mapping every word to an index
-# TODO handle unk, for now we assume we know the full vocab, so no unk?
 # TODO create a reverse index!
 # TODO can we make this faster?
 # TODO handle tags and padding for tags
-def process_vocabulary(train_sentences, dev_sentences, test_sentences, max_len):
+def process_vocabulary(train_sentences, dev_sentences, test_sentences, max_len, max_vocab_size):
     # assert correct train data
     assert_list_of_sentences(train_sentences)
     # assert correct dev data
     assert_list_of_sentences(dev_sentences)
     # assert correct test data
     assert_list_of_sentences(test_sentences)
+    # assert max_vocab_size at least two
+    assert max_vocab_size >= 2
     # Step 1 identify all unique words
-    words = get_unique_words(train_sentences).union(get_unique_words(dev_sentences)).union(
-        get_unique_words(test_sentences))
-    n_words = len(words)
-    logging.info('number of unique words: {}'.format(n_words))
-    word_to_idx = {w: i for i, w in enumerate(words)}
-    pad_value = n_words
+    words = get_word_frequencies(chain(train_sentences, dev_sentences, test_sentences))
+    logging.info('number of unique words before frequency trimming: {}'.format(len(words)))
+    sorted_words = sorted(words.items(), key=lambda x: -x[1])
+    # Only create vocab for the max_vocab_size entries, we don't need frequency anymore
+    sorted_words = [w for (w, f) in sorted_words[:max_vocab_size-2]]
+    n_words = len(sorted_words)
+    pad_value = 0
+    unk_value = n_words
+    logging.info('number of unique words after frequency trimming: {}'.format(n_words))
+    word_to_idx = {}
+    word_to_idx['UNK'] = unk_value
+    word_to_idx['PAD'] = pad_value
+    for i, w in enumerate(sorted_words):
+        word_to_idx[w] = i + 1
     train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx, max_len=max_len,
-                                 pad_value=pad_value)
-    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value)
-    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value)
+                                 pad_value=pad_value, unk_value=unk_value)
+    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value,
+                               unk_value=unk_value)
+    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value,
+                                unk_value=unk_value)
     return {'train_idx': train_idx, 'dev_idx': dev_idx, 'test_idx': test_idx, 'vocab': word_to_idx}
 
 
@@ -89,18 +103,18 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     max_len = max_seq_len
     logging.info('Max document length: {}'.format(max_len))
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
-    vocab_dict = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x, test_sentences=test_x, max_len=max_seq_len)
+    vocab_dict = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x, test_sentences=test_x,
+                                    max_len=max_seq_len, max_vocab_size=max_vocab_size)
     train_idx = vocab_dict['train_idx']
     dev_idx = vocab_dict['dev_idx']
     test_idx = vocab_dict['test_idx']
     vocab = vocab_dict['vocab']
-    # TODO enforce maximum vocabulary size!!!
     # build embeddings
-    vocab_size = len(vocab)
-    w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size, emb_size=emb_size)
+    w2v = helpers.load_crosslingual_embeddings(input_file=emb_file, vocab=vocab, max_vocab_size=max_vocab_size,
+                                               emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx]
-    logging.info('The length of the story {0} (DEV = {1}  TEST = {2})'.format(len(train_x), len(dev_x), len(test_x)))
+    logging.info('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
     test = [test_x, test_y, test_idx]
     dev = [dev_x, dev_y, dev_idx]
     # load game
@@ -137,7 +151,7 @@ def test_agent_batch(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(X_test, Y_true))
-    logging.info('***TEST {0}'.format(performance))
+    logging.info('***TEST {}'.format(performance))
 
 
 def test_agent_online(robot, game, model, budget):
@@ -170,7 +184,7 @@ def test_agent_online(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(X_test, Y_true))
-    logging.info('***TEST {0}'.format(performance))
+    logging.info('***TEST {}'.format(performance))
 
 
 def build_model(model_name, model_file):
@@ -220,7 +234,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         episode = 1
         logging.info('>>>>>> Playing game ..')
         while episode <= max_episode:
-            logging.info('>>>>>>> Current game round {} Maximum  {}'.format(episode, max_episode))
+            logging.info('>>>>>>> Current game round {} Maximum {}'.format(episode, max_episode))
             observation = game.get_frame(model)
             action = robot.get_action(observation)
             logging.info('> Action {}'.format(action))
