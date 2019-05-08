@@ -1,3 +1,4 @@
+from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model, Input
 from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
@@ -114,10 +115,14 @@ def seq2seq_model(features, labels, mode, params):
 
 
 def process_labels(labels, max_len):
-    return pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
+    padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
+    # TODO stay in numpy land
+    padded_labels = [to_categorical(i, num_classes=6) for i in padded_labels]
+    return np.array(padded_labels)
 
 
 # TODO Implement RNN model
+# TODO handle off by one in tags
 class RNNTagger(object):
     def __init__(self, model_file):
         logging.info('RNN Tagger')
@@ -132,7 +137,8 @@ class RNNTagger(object):
         y = np.array(y)
         y = process_labels(y, max_len=120)
         print('got idx: ', idx, type(idx), idx.shape)
-        print('got y: ', y, type(y), y.shape)
+        print('got y: ', y, type(y))
+#        print('got y: ', y, type(y), y.shape)
         print('idx[0]: ', idx[0])
         # keras implementation
         # TODO this should be a parameter
@@ -144,7 +150,7 @@ class RNNTagger(object):
         model = Dropout(0.1)(model)
         n_units = 128
         model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
-        n_tags = 5
+        n_tags = 6
         out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
         self.model = Model(input, out)
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])

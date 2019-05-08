@@ -55,6 +55,30 @@ def sentences_to_idx(sentences, word_to_idx, max_len, pad_value, unk_value):
     return padded_sequence
 
 
+def get_vocabulary(sentences, max_vocab_size):
+    # assert max_vocab_size at least two
+    assert max_vocab_size >= 2
+    # Step 1 identify all unique words
+    words = get_word_frequencies(sentences=sentences)
+    logging.info('number of unique words before frequency trimming: {}'.format(len(words)))
+    # Sort by frequency
+    sorted_words = sorted(words.items(), key=lambda x: -x[1])
+    # Only create vocab for the max_vocab_size entries, we don't need frequency anymore
+    sorted_words = [w for (w, f) in sorted_words[:max_vocab_size-2]]
+    n_words = len(sorted_words)
+    logging.info('number of unique words after frequency trimming: {}'.format(n_words))
+    # TODO define these as constants
+    # pad by zeros
+    pad_value = 0
+    # unk by n_words
+    unk_value = n_words
+    word_to_idx = {}
+    word_to_idx['UNK'] = unk_value
+    word_to_idx['PAD'] = pad_value
+    for i, w in enumerate(sorted_words):
+        word_to_idx[w] = i + 1
+    return word_to_idx
+
 # Returns ndarray mapping every word to an index
 # TODO create a reverse index!
 # TODO can we make this faster?
@@ -68,21 +92,10 @@ def process_vocabulary(train_sentences, dev_sentences, test_sentences, max_len, 
     assert_list_of_sentences(test_sentences)
     # assert max_vocab_size at least two
     assert max_vocab_size >= 2
-    # Step 1 identify all unique words
-    words = get_word_frequencies(chain(train_sentences, dev_sentences, test_sentences))
-    logging.info('number of unique words before frequency trimming: {}'.format(len(words)))
-    sorted_words = sorted(words.items(), key=lambda x: -x[1])
-    # Only create vocab for the max_vocab_size entries, we don't need frequency anymore
-    sorted_words = [w for (w, f) in sorted_words[:max_vocab_size-2]]
-    n_words = len(sorted_words)
-    pad_value = 0
-    unk_value = n_words
-    logging.info('number of unique words after frequency trimming: {}'.format(n_words))
-    word_to_idx = {}
-    word_to_idx['UNK'] = unk_value
-    word_to_idx['PAD'] = pad_value
-    for i, w in enumerate(sorted_words):
-        word_to_idx[w] = i + 1
+    word_to_idx = get_vocabulary(sentences=chain(train_sentences, dev_sentences, test_sentences),
+                                 max_vocab_size=max_vocab_size)
+    pad_value = word_to_idx['PAD']
+    unk_value = word_to_idx['UNK']
     train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx, max_len=max_len,
                                  pad_value=pad_value, unk_value=unk_value)
     dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value,
