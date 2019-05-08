@@ -1,3 +1,4 @@
+from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model, Input
 from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
 import pycrfsuite
@@ -112,6 +113,10 @@ def seq2seq_model(features, labels, mode, params):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
 
+def process_labels(labels, max_len):
+    return pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
+
+
 # TODO Implement RNN model
 class RNNTagger(object):
     def __init__(self, model_file):
@@ -125,6 +130,7 @@ class RNNTagger(object):
         logging.info('starting training...')
         idx = np.array(idx)
         y = np.array(y)
+        y = process_labels(y, max_len=120)
         print('got idx: ', idx, type(idx), idx.shape)
         print('got y: ', y, type(y), y.shape)
         print('idx[0]: ', idx[0])
