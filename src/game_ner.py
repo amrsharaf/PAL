@@ -28,7 +28,7 @@ class NERGame:
         # logging.info "Dictionary size", len(self.w2v), "Embedding size",
         # len(self.w2v[0])
 
-        # when queried times is 100, then stop
+        # when queried times is 'budget', then stop
         self.budget = budget
         self.queried_times = 0
 
