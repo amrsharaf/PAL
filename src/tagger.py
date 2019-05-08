@@ -10,9 +10,6 @@ import tensorflow as tf
 import numpy as np
 import os
 
-# TODO fix this
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
 # TODO do we need POS features?
 # POS was commented out in previous versions of the code
 def word2features(sent, i):
@@ -126,6 +123,11 @@ class RNNTagger(object):
 
     def train(self, idx, y):
         logging.info('starting training...')
+        idx = np.array(idx)
+        y = np.array(y)
+        print('got idx: ', idx, type(idx), idx.shape)
+        print('got y: ', y, type(y), y.shape)
+        print('idx[0]: ', idx[0])
         # keras implementation
         # TODO this should be a parameter
         max_len = 120
@@ -139,7 +141,7 @@ class RNNTagger(object):
         n_tags = 5
         out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
         self.model = Model(input, out)
-        self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics='accuracy')
+        self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         # TODO do we need a validation split?
         self.model.fit(idx, y, batch_size=32, epochs=5, verbose=1)
         # After defining the model, we run training steps by passing in batched inputs. we use TensorFlow Estimator API
@@ -148,7 +150,8 @@ class RNNTagger(object):
 #        estimator = tf.estimator.Estimator(model_fn=seq2seq_model, params=params)
 #        estimator.train(input_fn=lambda: input_fn(ints), steps=1000)
 #        estimator = tf.estimator.Estimator(model_fn=seq2seq_model, model_dir='model_dir', params=params)
-        assert False
+        print('done training...')
+#        assert False
 
     # TODO use word embeddings
     def test(self, features, labels):
