@@ -32,6 +32,48 @@ def parse_args():
     return parser.parse_args()
 
 
+def assert_list_of_sentences(sentences):
+    assert type(sentences) == list
+    assert len(sentences) >= 1
+    assert type(sentences[0]) == str
+
+
+def get_unique_words(sentences):
+    words_set = set()
+    for sentence in sentences:
+        for word in sentence.split():
+            words_set.add(word)
+    return words_set
+
+
+def sentences_to_idx(sentences, word_to_idx):
+    return [[word_to_idx[w] for w in s.split()]for s in sentences]
+
+
+# Returns ndarray mapping every word to an index
+# TODO handle unk, for now we assume we know the full vocab, so no unk?
+def process_vocabulary(train_sentences, dev_sentences, test_sentences):
+    # assert correct train data
+    assert_list_of_sentences(train_sentences)
+    # assert correct dev data
+    assert_list_of_sentences(dev_sentences)
+    # assert correct test data
+    assert_list_of_sentences(test_sentences)
+    # Step 1 identify all unique words
+    words = get_unique_words(train_sentences).union(get_unique_words(dev_sentences)).union(
+        get_unique_words(test_sentences))
+    n_words = len(words)
+    logging.info('number of unique words: ', n_words)
+    word_to_idx = {w: i+1 for i, w in enumerate(words)}
+    # TODO can we make this faster?
+    train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx)
+    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx)
+    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx)
+    # TODO handle padding
+    assert False
+    return train_idx, dev_idx, test_idx
+
+
 def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
     logging.info('Loading data ..')
@@ -41,17 +83,18 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     logging.info('Processing data')
     # build vocabulary
     max_len = max_seq_len
-    logging.info('Max document length: {0}'.format(max_len))
-    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(max_document_length=max_len, min_frequency=1)
+    logging.info('Max document length: {}'.format(max_len))
     # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
-    train_idx = np.array(list(vocab_processor.fit_transform(train_x)))
-    dev_idx = np.array(list(vocab_processor.fit_transform(dev_x)))
-    vocab = vocab_processor.vocabulary_
-    vocab.freeze()
-    test_idx = np.array(list(vocab_processor.fit_transform(test_x)))
-    # build embeddings
-    vocab = vocab_processor.vocabulary_
-    vocab_size = max_vocab_size
+    train_idx, dev_idx, test_idx = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x,
+                                                      test_sentences=test_x)
+#    train_idx = np.array(list(vocab_processor.fit_transform(train_x)))
+#    dev_idx = np.array(list(vocab_processor.fit_transform(dev_x)))
+#    vocab = vocab_processor.vocabulary_
+#    vocab.freeze()
+#    test_idx = np.array(list(vocab_processor.fit_transform(test_x)))
+#    # build embeddings
+#    vocab = vocab_processor.vocabulary_
+#    vocab_size = max_vocab_size
     w2v = helpers.load_crosslingual_embeddings(emb_file, vocab, vocab_size, emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx]
