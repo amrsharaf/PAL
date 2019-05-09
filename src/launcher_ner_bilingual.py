@@ -1,11 +1,9 @@
-import operator
 import sys
 import argparse
 from game_ner import NERGame
 from robot import RobotCNNDQN
 import numpy as np
 import helpers
-import tensorflow as tf
 from tagger import CRFTagger
 from tagger import RNNTagger
 import logging
@@ -64,11 +62,11 @@ def sentences_to_idx(sentences, word_to_idx, max_len, pad_value, unk_value):
     return padded_sequence
 
 
-def labels_to_idy(labels, max_len):
-    padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
+def labels_to_idy(labels, max_len, num_tags):
+    # TODO 4 should be a parameter
+    padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=4)
     # TODO stay in numpy land
-    # TODO number of classes should be 5
-    padded_labels = [to_categorical(i, num_classes=6) for i in padded_labels]
+    padded_labels = [to_categorical(i, num_classes=num_tags) for i in padded_labels]
     return np.array(padded_labels)
 
 
@@ -117,15 +115,17 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     # Train
     train_idx = sentences_to_idx(sentences=train_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                  unk_value=unk_value)
-    train_idy = labels_to_idy(labels=train_y, max_len=max_seq_len)
+    # TODO this should be a parameter
+    num_tags = 5
+    train_idy = labels_to_idy(labels=train_y, max_len=max_seq_len, num_tags=num_tags)
     # Dev
     dev_idx = sentences_to_idx(sentences=dev_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                unk_value=unk_value)
-    dev_idy = labels_to_idy(labels=dev_y, max_len=max_seq_len)
+    dev_idy = labels_to_idy(labels=dev_y, max_len=max_seq_len, num_tags=num_tags)
     # Test
     test_idx = sentences_to_idx(sentences=test_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                 unk_value=unk_value)
-    test_idy = labels_to_idy(labels=test_y, max_len=max_seq_len)
+    test_idy = labels_to_idy(labels=test_y, max_len=max_seq_len, num_tags=num_tags)
     # Build embeddings
     w2v = helpers.load_crosslingual_embeddings(input_file=emb_file, vocab=word_to_idx, max_vocab_size=max_vocab_size,
                                                emb_size=emb_size)

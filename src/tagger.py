@@ -128,8 +128,8 @@ class RNNTagger(object):
         model = Dropout(0.1)(model)
         n_units = 128
         model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
-        # TODO handle off by one error
-        n_tags = 6
+        # TODO this should be a parameter
+        n_tags = 5
         out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
         self.model = Model(input, out)
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -188,9 +188,9 @@ class RNNTagger(object):
             predictions_marginals = self.model.predict(features.reshape(1, -1))
             # Flatten by removing the extra dimension, and remove padding
             predictions_marginals = predictions_marginals[0, :sentence_length, :]
-            y_marginals = np.ones((sentence_length, n_tags)) * 0.2
-            return y_marginals
-#            return predictions_marginals
+#            y_marginals = np.ones((sentence_length, n_tags)) * 0.2
+#            return y_marginals
+            return predictions_marginals
 
 
 # TODO abstract away what is common with RNN Tagger
