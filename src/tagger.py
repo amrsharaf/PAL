@@ -61,59 +61,6 @@ def sent2tokens(sent):
     return [token for token, label in sent]
 
 
-# Sequence to sequence model
-# TODO why are the labels not used?
-# What is mode?
-# params: contains hyper-parameters
-# TODO seems like the evaluation mode is not implemented!
-def seq2seq_model(features, labels, mode, params):
-    ops = {}
-    # Training mode
-    if mode == tf.estimator.ModeKeys.TRAIN:
-        batch_sz = tf.shape(features['input'])[0]
-        with tf.variable_scope('main', reuse=False):
-            embedding = tf.get_variable('lookup_table', [params['vocab_size'], params['hidden_dim']])
-#            cells = multi_cell_fn()
-            # TODO Implement this
-            cells = None
-            helper = tf.contrib.seq2seq.TrainingHelper(
-                inputs=tf.nn.embedding_lookup(embedding, features['input']),
-                sequence_length=tf.count_nonzero(features['input'], 1, dtype=tf.int32))
-            # TODO replace the decoder with a simple classifier
-            decoder = tf.contrib.seq2seq.BasicDecoder(
-                cell=cells,
-                helper=helper,
-                initial_state=cells.zero_state(batch_sz, tf.float32),
-                output_layer=tf.layers.Dense(params['vocab_size']))
-            decoder_output, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder=decoder)
-            logits = decoder_output.rnn_output
-            output = features['output']
-            ops['global_step'] = tf.Variable(0, trainable=False)
-            ops['loss'] = tf.reduce_mean(tf.contrib.seq2seq.sequence_loss(
-                logits=logits, targets=output, weights=tf.to_float(tf.ones_like(output))))
-            # TODO implement clip_grads
-            ops['train'] = tf.train.AdamOptimizer().apply_gradients(
-                (ops['loss']), global_step=tf.train.get_global_step())
-            return tf.estimator.EstimatorSpec(mode=mode, loss=ops['loss'], train_op=ops['train'])
-    # Prediction mode
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        with tf.variable_scope('main', reuse=True):
-#            cells = multi_cell_fn()
-            cells = None
-            decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-                cell=cells,
-                embedding=tf.get_variable('lookup_table'),
-                start_tokens=tf.tile(tf.constant([params['char2idx']['<start>']], dtype=tf.int32), [1]),
-                end_token=params['char2idx']['<end>'],
-                initial_state=tf.contrib.seq2seq.tile_batch(cells.zero_state(1, tf.float32), params['beam_width']),
-                beam_width=params['beam_width'],
-                output_layer=tf.layers.Dense(params['vocab_size'], _reuse=True))
-            decoder_out, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder=decoder, maximum_iterations=params['seq_len'])
-            tf.identity(decoder_out[0].predicted_ids, name='predictions')
-            predictions = decoder_out.predicted_ids[:, :, 0]
-            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-
-
 def process_labels(labels, max_len):
     padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
     # TODO stay in numpy land
