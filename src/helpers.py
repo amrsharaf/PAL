@@ -12,7 +12,8 @@ label2str = {1: "PER", 2: "LOC", 3: "ORG", 4: "MISC", 5: "O"}
 labels_map = {'B-ORG': 3, 'O': 5, 'B-MISC': 4, 'B-PER': 1, 'I-PER': 1, 'B-LOC': 2, 'I-ORG': 3, 'I-MISC': 4, 'I-LOC': 2}
 
 
-def load_data2labels(input_file):
+# TODO we can make this faster, or run it once and pickle the data
+def load_data2labels(input_file, max_len):
     print('loading data from: ', input_file)
     seq_set = []
     seq = []
@@ -23,9 +24,11 @@ def load_data2labels(input_file):
         for line in f:
             line = line.strip()
             if line == "":
-                seq_set.append(" ".join(seq))
-                seq_set_label.append(seq_label)
-                seq_set_len.append(len(seq_label))
+                # only store sequences with lenght <= max_len!
+                if len(seq_label) <= max_len:
+                    seq_set.append(" ".join(seq))
+                    seq_set_label.append(seq_label)
+                    seq_set_len.append(len(seq_label))
                 seq = []
                 seq_label = []
             else:
