@@ -103,9 +103,10 @@ def get_vocabulary(sentences, max_vocab_size):
 def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
     logging.info('Loading data ..')
-    train_x, train_y, train_lens = helpers.load_data2labels(train_file)
-    test_x, test_y, test_lens = helpers.load_data2labels(test_file)
-    dev_x, dev_y, dev_lens = helpers.load_data2labels(dev_file)
+    # TODO utilize train_lens, test_lens, dev_lens
+    train_x, train_y, train_lens = helpers.load_data2labels(input_file=train_file, max_len=max_seq_len)
+    test_x, test_y, test_lens = helpers.load_data2labels(input_file=test_file, max_len=max_seq_len)
+    dev_x, dev_y, dev_lens = helpers.load_data2labels(input_file=dev_file, max_len=max_seq_len)
     logging.info('Processing data')
     # Build vocabulary
     logging.info('Max document length: {}'.format(max_seq_len))
