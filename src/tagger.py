@@ -137,12 +137,6 @@ class RNNTagger(object):
         self.model.fit(idx, idy, batch_size=32, epochs=5, verbose=1)
         # After defining the model, we run training steps by passing in batched inputs. we use TensorFlow Estimator API
         # to train the model.
-        # TODO set model_dir to avoid the creation of a temporary directory
-#        estimator = tf.estimator.Estimator(model_fn=seq2seq_model, params=params)
-#        estimator.train(input_fn=lambda: input_fn(ints), steps=1000)
-#        estimator = tf.estimator.Estimator(model_fn=seq2seq_model, model_dir='model_dir', params=params)
-        print('done training...')
-#        assert False
 
     # TODO use word embeddings
     # TODO label should be an ndarray
@@ -179,26 +173,24 @@ class RNNTagger(object):
             # TODO would it be better to compute the sum of log probabilities instead of the probabilities?!
             return [confidence]
 
+    # TODO add assert statements
     def get_predictions(self, features):
-        print('got features: ', features)
+        # TODO This should be a constant!
+        PAD = 0
+        sentence_length = np.sum(features != PAD)
+        n_tags = 5
         if self.model is None:
-            print('we have not trained anything yet')
-            y_marginals = []
-            # TODO compute sentence length correctly
-            # TODO replace zero with the padding token
-            sentence_length = np.sum(features != 0)
             # TODO this should be a parameter
-            n_tags = 5
             # TODO can use numpy to make this faster
-            for i in range(sentence_length):
-                y_i = []
-                for y in range(n_tags):
-                    y_i.append(0.2)
-                y_marginals.append(y_i)
+            y_marginals = np.ones((sentence_length, n_tags)) * 0.2
             return y_marginals
         else:
-            print('the model has been trained!')
-        assert False
+            predictions_marginals = self.model.predict(features.reshape(1, -1))
+            # Flatten by removing the extra dimension, and remove padding
+            predictions_marginals = predictions_marginals[0, :sentence_length, :]
+            y_marginals = np.ones((sentence_length, n_tags)) * 0.2
+            return y_marginals
+#            return predictions_marginals
 
 
 # TODO abstract away what is common with RNN Tagger

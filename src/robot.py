@@ -121,6 +121,7 @@ class RobotCNNDQN:
         #    self.saver.save(self.sess, './' +
         #                    'network' + '-dqn', global_step=self.time_step)
 
+    # TODO understand the model and the design choices made here
     def update(self, observation, action, reward, observation2, terminal):
         self.current_state = observation
         new_state = observation2
