@@ -60,8 +60,6 @@ def sent2tokens(sent):
     return [token for token, label in sent]
 
 
-
-
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
@@ -75,9 +73,8 @@ class RNNTagger(object):
     def train(self, idx, idy):
         logging.info('starting training...')
         idx = np.array(idx)
+        idy = np.array(idy)
         # TODO y should arrive here already pre-processed correctly
-        y = np.array(y)
-        y = process_labels(y, max_len=120)
         # keras implementation
         # TODO this should be a parameter
         max_len = 120
@@ -95,7 +92,7 @@ class RNNTagger(object):
         self.model = Model(input, out)
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         # TODO do we need a validation split?
-        self.model.fit(idx, y, batch_size=32, epochs=5, verbose=1)
+        self.model.fit(idx, idy, batch_size=32, epochs=5, verbose=1)
         # After defining the model, we run training steps by passing in batched inputs. we use TensorFlow Estimator API
         # to train the model.
         # TODO set model_dir to avoid the creation of a temporary directory

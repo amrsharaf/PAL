@@ -90,8 +90,6 @@ class NERGame:
         else:
             reward = 0.
         # next frame
-        next_sentence = []
-        next_sentence_idx = []
         if self.queried_times == self.budget:
             self.terminal = True
             is_terminal = True
@@ -99,6 +97,7 @@ class NERGame:
             # reward = new_performance * 100
             # prepare the next game
             self.reboot()  # set the current frame = 0
+            # TODO update these data together
             next_sentence = self.train_x[self.order[self.current_frame]]
             next_sentence_idx = self.train_idx[self.order[self.current_frame]]
         else:
@@ -137,6 +136,7 @@ class NERGame:
             self.queried_set_x.append(sentence)
             self.queried_set_y.append(labels)
             self.queried_set_idx.append(self.train_idx[self.order[self.current_frame]])
+            self.queried_set_idy.append(self.train_idy[self.order[self.current_frame]])
             logging.info('> Queried times {}'.format(len(self.queried_set_x)))
 
     # tagger = model
@@ -145,7 +145,7 @@ class NERGame:
         # train with examples: self.model.train(self.queried_set_x,
         # self.queried_set_y)
         if tagger.name == "RNN":
-            tagger.train(self.queried_set_idx, self.queried_set_y)
+            tagger.train(self.queried_set_idx, self.queried_set_idy)
             performance = tagger.test(self.dev_idx, self.dev_y)
             return performance
         else:
