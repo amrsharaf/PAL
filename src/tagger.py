@@ -163,16 +163,21 @@ class RNNTagger(object):
         else:
             # TODO might need to tune the temperature parameter
             print('got sentence_idx: ', sentence_idx)
-            predictions_probabilities = self.model.predict(sentence_idx)
-            print('predictions_probabilities: ', predictions_probabilities)
+            predictions_marginals = self.model.predict(sentence_idx.reshape(1, -1))
+            predictions_probabilities = np.max(predictions_marginals, axis=-1)
+            # TODO PAD should be a constant
+            PAD = 0
+            sentence_length = np.sum(sentence_idx != PAD)
+            # Remove padding when computing the confidence
+            predictions_probabilities = predictions_probabilities[:, :sentence_length]
+            log_predictions_probabilities = np.log(predictions_probabilities)
+            # TODO we're using log probabilities instead of probabilities
+            # TODO we might have to tune the temperature parameter to get calibrated probabilities
+            confidence = log_predictions_probabilities.sum() / sentence_length
             # TODO match probabilities from pycrfsuite
             # TODO compute probability of a sequence
             # TODO would it be better to compute the sum of log probabilities instead of the probabilities?!
-            prediction = self.test(idx=sentence_idx, y=None)
-            assert False
-#        p_y_pred = tagger.probability(y_pred)
-#        confidence = pow(p_y_pred, 1. / len(y_pred))
-#        return [confidence]
+            return [confidence]
 
     def get_predictions(self, features):
         print('got features: ', features)
