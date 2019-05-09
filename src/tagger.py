@@ -104,16 +104,17 @@ class RNNTagger(object):
 #        assert False
 
     # TODO use word embeddings
+    # TODO abstract away evaluation code
+    # TODO label should be an ndarray
     def test(self, features, labels):
         print('inside test...')
         print('got features: ', features)
         print('labels: ', labels)
         assert self.model is not None
+        # TODO what is the batch size?
         # Forward prop to get the predictions
-        if self.model is None:
-            return None
-        else:
-            predictions = self.model.predict(features)
+        predictions = self.model.predict(features)
+        print('predictions: ', predictions)
         assert False
 
     def get_confidence(self, sentence_idx):
