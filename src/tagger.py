@@ -60,6 +60,47 @@ def sent2tokens(sent):
     return [token for token, label in sent]
 
 
+# Compute f-score
+# TODO vectorize this function to make it faster using ndarray
+def compute_fscore(y_pred, Y_true):
+    pre = 0
+    pre_tot = 0
+    rec = 0
+    rec_tot = 0
+    corr = 0
+    total = 0
+    number_of_examples = len(Y_true)
+    for i in range(number_of_examples):
+        sentence_length = len(Y_true[i])
+        for j in range(sentence_length):
+            total += 1
+            if y_pred[i][j] == Y_true[i][j]:
+                corr += 1
+            if helpers.label2str[int(y_pred[i][j])] != 'O':  # not 'O'
+                pre_tot += 1
+                if y_pred[i][j] == Y_true[i][j]:
+                    pre += 1
+            if helpers.label2str[int(Y_true[i][j])] != 'O':
+                rec_tot += 1
+                if y_pred[i][j] == Y_true[i][j]:
+                    rec += 1
+    res = corr * 1. / total
+    logging.info('Accuracy (token level) {}'.format(res))
+    if pre_tot == 0:
+        pre = 0
+    else:
+        pre = 1. * pre / pre_tot
+    rec = 1. * rec / rec_tot
+    logging.info('Precision {} Recall {}'.format(pre, rec))
+    beta = 1
+    f1score = 0
+    if pre != 0 or rec != 0:
+        f1score = (beta * beta + 1) * pre * rec / \
+                  (beta * beta * pre + rec)
+    logging.info('F1 {}'.format(f1score))
+    return f1score
+
+
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
@@ -113,7 +154,12 @@ class RNNTagger(object):
         assert self.model is not None
         # TODO what is the batch size?
         # Forward prop to get the predictions
-        predictions = self.model.predict(features)
+        predictions_probability = self.model.predict(features)
+        predictions = np.argmax(predictions_probability, axis=-1)
+        fscore = compute_fscore(y_pred=predictions, Y_true=labels)
+        # TODO run the evaluation!
+        # Exclude padding
+        print('fscore: ', fscore)
         print('predictions: ', predictions)
         assert False
 
@@ -161,6 +207,7 @@ class RNNTagger(object):
         assert False
 
 
+# TODO abstract away what is common with RNN Tagger
 class CRFTagger(object):
 
     def __init__(self, model_file):
@@ -269,37 +316,5 @@ class CRFTagger(object):
         tagger.open(self.model_file)
         # TODO this list comprehension is so slow, can we make it faster?
         y_pred = [tagger.tag(xseq) for xseq in X_test]
-        pre = 0
-        pre_tot = 0
-        rec = 0
-        rec_tot = 0
-        corr = 0
-        total = 0
-        for i in range(len(Y_true)):
-            for j in range(len(Y_true[i])):
-                total += 1
-                if y_pred[i][j] == Y_true[i][j]:
-                    corr += 1
-                if helpers.label2str[int(y_pred[i][j])] != 'O':  # not 'O'
-                    pre_tot += 1
-                    if y_pred[i][j] == Y_true[i][j]:
-                        pre += 1
-                if helpers.label2str[int(Y_true[i][j])] != 'O':
-                    rec_tot += 1
-                    if y_pred[i][j] == Y_true[i][j]:
-                        rec += 1
-        res = corr * 1. / total
-        logging.info('Accuracy (token level) {}'.format(res))
-        if pre_tot == 0:
-            pre = 0
-        else:
-            pre = 1. * pre / pre_tot
-        rec = 1. * rec / rec_tot
-        logging.info('Precision {} Recall {}'.format(pre, rec))
-        beta = 1
-        f1score = 0
-        if pre != 0 or rec != 0:
-            f1score = (beta * beta + 1) * pre * rec / \
-                (beta * beta * pre + rec)
-        logging.info('F1 {}'.format(f1score))
+        f1score = compute_fscore(y_pred=y_pred, Y_true=Y_true)
         return f1score
