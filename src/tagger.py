@@ -145,23 +145,16 @@ class RNNTagger(object):
 #        assert False
 
     # TODO use word embeddings
-    # TODO abstract away evaluation code
     # TODO label should be an ndarray
+    # Keep track of length mask
     def test(self, features, labels):
-        print('inside test...')
-        print('got features: ', features)
-        print('labels: ', labels)
         assert self.model is not None
         # TODO what is the batch size?
         # Forward prop to get the predictions
         predictions_probability = self.model.predict(features)
         predictions = np.argmax(predictions_probability, axis=-1)
-        fscore = compute_fscore(y_pred=predictions, Y_true=labels)
-        # TODO run the evaluation!
-        # Exclude padding
-        print('fscore: ', fscore)
-        print('predictions: ', predictions)
-        assert False
+        # TODO vectorize and exclude padding
+        return compute_fscore(y_pred=predictions, Y_true=labels)
 
     def get_confidence(self, sentence_idx):
         if self.model is None:
