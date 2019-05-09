@@ -104,12 +104,13 @@ def compute_fscore(y_pred, Y_true):
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
-    def __init__(self, model_file):
+    def __init__(self, model_file, max_len):
         logging.info('RNN Tagger')
         self.model_file = model_file
         self.name = 'RNN'
         # Untrained model
         self.model = None
+        self.max_len = max_len
 
     # Avoid lists all together by allocating large ndarray objects
     def train(self, idx, idy):
@@ -118,8 +119,7 @@ class RNNTagger(object):
         idy = np.array(idy)
         # TODO y should arrive here already pre-processed correctly
         # keras implementation
-        # TODO this should be a parameter
-        max_len = 120
+        max_len = self.max_len
         input = Input(shape=(max_len,))
         # TODO this should be a parameter
         n_words = 20000

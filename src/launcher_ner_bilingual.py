@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument('--train', help="training phase")
     parser.add_argument('--test', help="testing phase")
     # tensorflow flag for the maximum sequence length
-    parser.add_argument('--max_seq_len', default=120, required=False, help='sequence')
+    parser.add_argument('--max_seq_len', type=int, default=120, required=False, help='sequence')
     # tensorflow flag for the maximum vocabulary size
     parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
     # Embedding size
@@ -205,11 +205,11 @@ def test_agent_online(robot, game, model, budget):
     logging.info('***TEST {}'.format(performance))
 
 
-def build_model(model_name, model_file):
+def build_model(model_name, model_file, max_len):
     if model_name == 'CRF':
         model = CRFTagger(model_file=model_file)
     elif model_name == 'RNN':
-        model = RNNTagger(model_file=model_file)
+        model = RNNTagger(model_file=model_file, max_len=max_len)
     else:
         logging.error('Invalid model type')
         assert False
@@ -228,7 +228,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         assert False
 #        robot = RobotDQN(actions)
     elif agent == 'CNNDQN':
-        robot = RobotCNNDQN(actions, embedding_size=embedding_size)
+        robot = RobotCNNDQN(actions, embedding_size=embedding_size, max_len=max_seq_len)
     else:
         logging.info('** There is no robot.')
         raise SystemExit
@@ -246,7 +246,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
         # tagger
-        model = build_model(model_name=model_name, model_file=model_file)
+        model = build_model(model_name=model_name, model_file=model_file, max_len=max_seq_len)
         # play game
         episode = 1
         logging.info('>>>>>> Playing game ..')
