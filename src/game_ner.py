@@ -32,10 +32,12 @@ class NERGame:
         self.budget = budget
         self.queried_times = 0
 
+        # TODO use ndarrays for everything
         # select pool
         self.queried_set_x = []
         self.queried_set_y = []
         self.queried_set_idx = []
+        self.queried_set_idy = []
 
         # let's start
         self.episode = 0
@@ -102,13 +104,12 @@ class NERGame:
             next_sentence = self.train_x[self.order[self.current_frame + 1]]
             next_sentence_idx = self.train_idx[self.order[self.current_frame + 1]]
             self.current_frame += 1
-
-        confidence = 0.
-        predictions = []
+        # TODO refactor to remove the if statements
         if model.name == "CRF":
             confidence = model.get_confidence(next_sentence)
             predictions = model.get_predictions(next_sentence)
         else:
+            # RNN case
             confidence = model.get_confidence(next_sentence_idx)
             predictions = model.get_predictions(next_sentence_idx)
         preds_padding = []
@@ -145,14 +146,14 @@ class NERGame:
             tagger.train(self.queried_set_idx, self.queried_set_y)
             performance = tagger.test(self.dev_idx, self.dev_y)
             return performance
-        train_sents = helpers.data2sents(
-            self.queried_set_x, self.queried_set_y)
-        # logging.info train_sents
-        tagger.train(train_sents)
-        # test on development data
-        performance = tagger.test(self.X_test, self.Y_true)
-        # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
-        return performance
+        else:
+            # CRF case
+            train_sents = helpers.data2sents(self.queried_set_x, self.queried_set_y)
+            tagger.train(train_sents)
+            # test on development data
+            performance = tagger.test(self.X_test, self.Y_true)
+            # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
+            return performance
 
     def reboot(self):
         # resort story
