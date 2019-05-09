@@ -139,11 +139,9 @@ class NERGame:
             self.queried_set_idy.append(self.train_idy[self.order[self.current_frame]])
             logging.info('> Queried times {}'.format(len(self.queried_set_x)))
 
-    # tagger = model
     def get_performance(self, tagger):
         # train with {queried_set_x, queried_set_y}
-        # train with examples: self.model.train(self.queried_set_x,
-        # self.queried_set_y)
+        # train with examples: self.model.train(self.queried_set_x, self.queried_set_y)
         if tagger.name == "RNN":
             tagger.train(self.queried_set_idx, self.queried_set_idy)
             performance = tagger.test(self.dev_idx, self.dev_y)
