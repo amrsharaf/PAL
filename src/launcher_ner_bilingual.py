@@ -208,7 +208,6 @@ def build_model(model_name, model_file):
     if model_name == 'CRF':
         model = CRFTagger(model_file=model_file)
     elif model_name == 'RNN':
-        # TODO what is tagger?!
         model = RNNTagger(model_file=model_file)
     else:
         logging.error('Invalid model type')
