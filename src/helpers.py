@@ -6,10 +6,12 @@ from collections import Counter
 import tensorflow as tf
 
 # map a label to a string
-label2str = {1: "PER", 2: "LOC", 3: "ORG", 4: "MISC", 5: "O"}
+#label2str = {1: "PER", 2: "LOC", 3: "ORG", 4: "MISC", 5: "O"}
+label2str = {0: "PER", 1: "LOC", 2: "ORG", 3: "MISC", 4: "O"}
 
 # predefine a label_set: PER - 1, LOC - 2, ORG - 3, MISC - 4, O - 5, 0 is for padding
-labels_map = {'B-ORG': 3, 'O': 5, 'B-MISC': 4, 'B-PER': 1, 'I-PER': 1, 'B-LOC': 2, 'I-ORG': 3, 'I-MISC': 4, 'I-LOC': 2}
+#labels_map = {'B-ORG': 3, 'O': 5, 'B-MISC': 4, 'B-PER': 1, 'I-PER': 1, 'B-LOC': 2, 'I-ORG': 3, 'I-MISC': 4, 'I-LOC': 2}
+labels_map = {'B-ORG': 2, 'O': 4, 'B-MISC': 3, 'B-PER': 0, 'I-PER': 0, 'B-LOC': 1, 'I-ORG': 2, 'I-MISC': 3, 'I-LOC': 1}
 
 
 # TODO we can make this faster, or run it once and pickle the data
