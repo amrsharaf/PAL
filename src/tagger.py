@@ -161,19 +161,15 @@ class RNNTagger(object):
             # We haven't trained anything yet!
             return [0.2]
         else:
+            # TODO might need to tune the temperature parameter
             print('got sentence_idx: ', sentence_idx)
-            # TODO do we need to load a model from a file every time we make a prediction?
+            predictions_probabilities = self.model.predict(sentence_idx)
+            print('predictions_probabilities: ', predictions_probabilities)
+            # TODO match probabilities from pycrfsuite
+            # TODO compute probability of a sequence
+            # TODO would it be better to compute the sum of log probabilities instead of the probabilities?!
             prediction = self.test(idx=sentence_idx, y=None)
-            print('got prediction: ', prediction)
             assert False
-#        sent = sent2features(sent)
-#        tagger = pycrfsuite.Tagger()
-#        if not os.path.isfile(self.model_file):
-#            confidence = 0.2
-#            return [confidence]
-#        tagger.open(self.model_file)
-#        tagger.set(sent)
-#        y_pred = tagger.tag()
 #        p_y_pred = tagger.probability(y_pred)
 #        confidence = pow(p_y_pred, 1. / len(y_pred))
 #        return [confidence]
