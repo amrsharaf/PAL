@@ -1,4 +1,3 @@
-from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model, Input
 from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
@@ -61,11 +60,6 @@ def sent2tokens(sent):
     return [token for token, label in sent]
 
 
-def process_labels(labels, max_len):
-    padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
-    # TODO stay in numpy land
-    padded_labels = [to_categorical(i, num_classes=6) for i in padded_labels]
-    return np.array(padded_labels)
 
 
 # TODO Implement RNN model

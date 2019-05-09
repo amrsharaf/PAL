@@ -12,8 +12,10 @@ import logging
 import tagger
 import os
 from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
 from collections import defaultdict
 from itertools import chain
+
 
 # TODO call by reference global variables!
 def parse_args():
@@ -57,8 +59,17 @@ def get_word_frequencies(sentences):
 # TODO also use the same function for padding tags
 def sentences_to_idx(sentences, word_to_idx, max_len, pad_value, unk_value):
     unpadded_sequence = [[word_to_idx[w] if w in word_to_idx else unk_value for w in s.split()]for s in sentences]
+    # pad_sequences return an ndarray which is exactly what we want
     padded_sequence = pad_sequences(maxlen=max_len, sequences=unpadded_sequence, padding='post', value=pad_value)
     return padded_sequence
+
+
+def labels_to_idy(labels, max_len):
+    padded_labels = pad_sequences(maxlen=max_len, sequences=labels, padding='post', value=5)
+    # TODO stay in numpy land
+    # TODO number of classes should be 5
+    padded_labels = [to_categorical(i, num_classes=6) for i in padded_labels]
+    return np.array(padded_labels)
 
 
 # Creates a vocabulary given iterator over sentences and maximum vocab size
@@ -77,8 +88,8 @@ def get_vocabulary(sentences, max_vocab_size):
     # TODO define these as constants
     # pad by zeros
     pad_value = 0
-    # unk by n_words
-    unk_value = n_words
+    # unk by n_words + 1
+    unk_value = n_words + 1
     word_to_idx = {}
     word_to_idx['UNK'] = unk_value
     word_to_idx['PAD'] = pad_value
@@ -96,26 +107,32 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     test_x, test_y, test_lens = helpers.load_data2labels(test_file)
     dev_x, dev_y, dev_lens = helpers.load_data2labels(dev_file)
     logging.info('Processing data')
-    # build vocabulary
+    # Build vocabulary
     logging.info('Max document length: {}'.format(max_seq_len))
     # Create vocabulary
     word_to_idx = get_vocabulary(sentences=chain(train_x, dev_x, test_x), max_vocab_size=max_vocab_size)
     pad_value = word_to_idx['PAD']
     unk_value = word_to_idx['UNK']
+    # Train
     train_idx = sentences_to_idx(sentences=train_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                  unk_value=unk_value)
+    train_idy = labels_to_idy(labels=train_y, max_len=max_seq_len)
+    # Dev
     dev_idx = sentences_to_idx(sentences=dev_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                unk_value=unk_value)
+    dev_idy = labels_to_idy(labels=dev_y, max_len=max_seq_len)
+    # Test
     test_idx = sentences_to_idx(sentences=test_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
                                 unk_value=unk_value)
-    # build embeddings
+    test_idy = labels_to_idy(labels=test_y, max_len=max_seq_len)
+    # Build embeddings
     w2v = helpers.load_crosslingual_embeddings(input_file=emb_file, vocab=word_to_idx, max_vocab_size=max_vocab_size,
                                                emb_size=emb_size)
     # prepare story
-    story = [train_x, train_y, train_idx]
+    story = [train_x, train_y, train_idx, train_idy]
     logging.info('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
-    test = [test_x, test_y, test_idx]
-    dev = [dev_x, dev_y, dev_idx]
+    test = [test_x, test_y, test_idx, test_idy]
+    dev = [dev_x, dev_y, dev_idx, dev_idy]
     # load game
     logging.info('Loading game ..')
     # TODO use named arguments here

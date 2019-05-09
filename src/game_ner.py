@@ -4,6 +4,8 @@ import tagger
 import logging
 
 
+# TODO change this to a Gym environment
+# TODO fix the random seed
 class NERGame:
 
     def __init__(self, story, test, dev, max_len, w2v, budget):
@@ -11,9 +13,9 @@ class NERGame:
         # load data as story
         logging.info('Initializing the game:')
         # import story
-        self.train_x, self.train_y, self.train_idx = story
-        self.test_x, self.test_y, self.test_idx = test
-        self.dev_x, self.dev_y, self.dev_idx = dev
+        self.train_x, self.train_y, self.train_idx, self.train_idy = story
+        self.test_x, self.test_y, self.test_idx, self.test_idy = test
+        self.dev_x, self.dev_y, self.dev_idx, self.dev_idy = dev
         self.test_sents = helpers.data2sents(self.dev_x, self.dev_y)
         # TODO this should be a function
         self.X_test = [tagger.sent2features(s) for s in self.test_sents]
