@@ -70,6 +70,7 @@ class RNNTagger(object):
         # Untrained model
         self.model = None
 
+    # Avoid lists all together by allocating large ndarray objects
     def train(self, idx, idy):
         logging.info('starting training...')
         idx = np.array(idx)
@@ -107,6 +108,7 @@ class RNNTagger(object):
         print('inside test...')
         print('got features: ', features)
         print('labels: ', labels)
+        assert self.model is not None
         # Forward prop to get the predictions
         if self.model is None:
             return None
