@@ -131,25 +131,24 @@ class RNNTagger(object):
         # Untrained model
         self.model = None
 
-    def train(self, idx, y):
+    def train(self, idx, idy):
         logging.info('starting training...')
         idx = np.array(idx)
+        # TODO y should arrive here already pre-processed correctly
         y = np.array(y)
         y = process_labels(y, max_len=120)
-        print('got idx: ', idx, type(idx), idx.shape)
-        print('got y: ', y, type(y))
-#        print('got y: ', y, type(y), y.shape)
-        print('idx[0]: ', idx[0])
         # keras implementation
         # TODO this should be a parameter
         max_len = 120
         input = Input(shape=(max_len,))
         # TODO this should be a parameter
         n_words = 20000
+        # TODO use fixed embeddings
         model = Embedding(input_dim=n_words, output_dim=40, input_length=max_len)(input)
         model = Dropout(0.1)(model)
         n_units = 128
         model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
+        # TODO handle off by one error
         n_tags = 6
         out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
         self.model = Model(input, out)
