@@ -49,12 +49,19 @@ def get_word_frequencies(sentences):
     return words_dict
 
 
+# Returns ndarray mapping every word to an index
+# TODO can we start tags from zero for pycrfsuite
+# TODO create a reverse index!
+# TODO can we make this faster?
+# TODO handle tags and padding for tags
+# TODO also use the same function for padding tags
 def sentences_to_idx(sentences, word_to_idx, max_len, pad_value, unk_value):
     unpadded_sequence = [[word_to_idx[w] if w in word_to_idx else unk_value for w in s.split()]for s in sentences]
     padded_sequence = pad_sequences(maxlen=max_len, sequences=unpadded_sequence, padding='post', value=pad_value)
     return padded_sequence
 
 
+# Creates a vocabulary given iterator over sentences and maximum vocab size
 def get_vocabulary(sentences, max_vocab_size):
     # assert max_vocab_size at least two
     assert max_vocab_size >= 2
@@ -79,32 +86,9 @@ def get_vocabulary(sentences, max_vocab_size):
         word_to_idx[w] = i + 1
     return word_to_idx
 
-# Returns ndarray mapping every word to an index
-# TODO create a reverse index!
-# TODO can we make this faster?
-# TODO handle tags and padding for tags
-def process_vocabulary(train_sentences, dev_sentences, test_sentences, max_len, max_vocab_size):
-    # assert correct train data
-    assert_list_of_sentences(train_sentences)
-    # assert correct dev data
-    assert_list_of_sentences(dev_sentences)
-    # assert correct test data
-    assert_list_of_sentences(test_sentences)
-    # assert max_vocab_size at least two
-    assert max_vocab_size >= 2
-    word_to_idx = get_vocabulary(sentences=chain(train_sentences, dev_sentences, test_sentences),
-                                 max_vocab_size=max_vocab_size)
-    pad_value = word_to_idx['PAD']
-    unk_value = word_to_idx['UNK']
-    train_idx = sentences_to_idx(sentences=train_sentences, word_to_idx=word_to_idx, max_len=max_len,
-                                 pad_value=pad_value, unk_value=unk_value)
-    dev_idx = sentences_to_idx(sentences=dev_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value,
-                               unk_value=unk_value)
-    test_idx = sentences_to_idx(sentences=test_sentences, word_to_idx=word_to_idx, max_len=max_len, pad_value=pad_value,
-                                unk_value=unk_value)
-    return {'train_idx': train_idx, 'dev_idx': dev_idx, 'test_idx': test_idx, 'vocab': word_to_idx}
 
-
+# TODO is there a better way to handle UNK and PAD?
+# TODO also keep track of train_idy, a padded version of tags
 def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
     logging.info('Loading data ..')
@@ -113,17 +97,19 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     dev_x, dev_y, dev_lens = helpers.load_data2labels(dev_file)
     logging.info('Processing data')
     # build vocabulary
-    max_len = max_seq_len
-    logging.info('Max document length: {}'.format(max_len))
-    # vocab = vocab_processor.vocabulary_ # start from {"<UNK>":0}
-    vocab_dict = process_vocabulary(train_sentences=train_x, dev_sentences=dev_x, test_sentences=test_x,
-                                    max_len=max_seq_len, max_vocab_size=max_vocab_size)
-    train_idx = vocab_dict['train_idx']
-    dev_idx = vocab_dict['dev_idx']
-    test_idx = vocab_dict['test_idx']
-    vocab = vocab_dict['vocab']
+    logging.info('Max document length: {}'.format(max_seq_len))
+    # Create vocabulary
+    word_to_idx = get_vocabulary(sentences=chain(train_x, dev_x, test_x), max_vocab_size=max_vocab_size)
+    pad_value = word_to_idx['PAD']
+    unk_value = word_to_idx['UNK']
+    train_idx = sentences_to_idx(sentences=train_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
+                                 unk_value=unk_value)
+    dev_idx = sentences_to_idx(sentences=dev_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
+                               unk_value=unk_value)
+    test_idx = sentences_to_idx(sentences=test_x, word_to_idx=word_to_idx, max_len=max_seq_len, pad_value=pad_value,
+                                unk_value=unk_value)
     # build embeddings
-    w2v = helpers.load_crosslingual_embeddings(input_file=emb_file, vocab=vocab, max_vocab_size=max_vocab_size,
+    w2v = helpers.load_crosslingual_embeddings(input_file=emb_file, vocab=word_to_idx, max_vocab_size=max_vocab_size,
                                                emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx]
@@ -132,7 +118,8 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
     dev = [dev_x, dev_y, dev_idx]
     # load game
     logging.info('Loading game ..')
-    game = NERGame(story, test, dev, max_len, w2v, budget)
+    # TODO use named arguments here
+    game = NERGame(story, test, dev, max_seq_len, w2v, budget)
     return game
 
 
