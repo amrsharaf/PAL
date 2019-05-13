@@ -101,6 +101,31 @@ def compute_fscore(y_pred, Y_true):
     return f1score
 
 
+def build_keras_model(max_len):
+    logging.info('building Keras model...')
+    input = Input(shape=(max_len,))
+    # TODO this should be a parameter
+    n_words = 20000
+    # TODO use fixed embeddings
+    model = Embedding(input_dim=n_words, output_dim=40, input_length=max_len)(input)
+    model = Dropout(0.1)(model)
+    n_units = 128
+    model = LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1)(model)
+    # TODO the model below is a stronger bi-directional model
+    # model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
+    # TODO this should be a parameter
+    n_tags = 5
+    # TODO what does TimeDistributed do?
+    out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
+    model = Model(input, out)
+    logging.info('Model type: ')
+    logging.info(type(model))
+    logging.info('Model summary: ')
+    logging.info(model.summary())
+    logging.info('done building model...')
+    return model
+
+
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
@@ -112,43 +137,44 @@ class RNNTagger(object):
         self.model = None
         self.max_len = max_len
 
-    # Avoid lists all together by allocating large ndarray objects
+    # TODO Avoid lists all together by allocating large ndarray objects
+    # TODO Fine tune instead of learn from scratch
+    # TODO fix the word embeddings
+    # TODO test offfline
     def train(self, idx, idy):
         logging.info('starting training...')
+        # TODO can we avoid this np.array call?
         idx = np.array(idx)
         idy = np.array(idy)
-        # TODO y should arrive here already pre-processed correctly
-        # keras implementation
         max_len = self.max_len
-        input = Input(shape=(max_len,))
-        # TODO this should be a parameter
-        n_words = 20000
-        # TODO use fixed embeddings
-        model = Embedding(input_dim=n_words, output_dim=40, input_length=max_len)(input)
-        model = Dropout(0.1)(model)
-        n_units = 128
-        model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
-        # TODO this should be a parameter
-        n_tags = 5
-        out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
-        self.model = Model(input, out)
+        self.model = build_keras_model(max_len)
+        logging.info('Model type: ')
+        logging.info(type(self.model))
+        logging.info('Model summary: ')
+        logging.info(self.model.summary())
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         # TODO do we need a validation split?
-        self.model.fit(idx, idy, batch_size=32, epochs=5, verbose=1)
-        # After defining the model, we run training steps by passing in batched inputs. we use TensorFlow Estimator API
-        # to train the model.
+        self.model.fit(idx, idy, batch_size=200, epochs=5, verbose=1)
+        logging.info('done training...')
 
     # TODO use word embeddings
     # TODO label should be an ndarray
     # Keep track of length mask
     def test(self, features, labels):
         assert self.model is not None
+        logging.info('starting testing...')
         # TODO what is the batch size?
         # Forward prop to get the predictions
-        predictions_probability = self.model.predict(features)
+        num_samples = features.shape[0]
+        logging.info('Number of samples: {}'.format(num_samples))
+        max_batch_size = 4096
+        batch_size = min(num_samples, max_batch_size)
+        predictions_probability = self.model.predict(features, batch_size=batch_size)
         predictions = np.argmax(predictions_probability, axis=-1)
         # TODO vectorize and exclude padding
-        return compute_fscore(y_pred=predictions, Y_true=labels)
+        fscore = compute_fscore(y_pred=predictions, Y_true=labels)
+        logging.info('done testing...')
+        return fscore
 
     def get_confidence(self, sentence_idx):
         if self.model is None:
@@ -156,7 +182,6 @@ class RNNTagger(object):
             return [0.2]
         else:
             # TODO might need to tune the temperature parameter
-            print('got sentence_idx: ', sentence_idx)
             predictions_marginals = self.model.predict(sentence_idx.reshape(1, -1))
             predictions_probabilities = np.max(predictions_marginals, axis=-1)
             # TODO PAD should be a constant
