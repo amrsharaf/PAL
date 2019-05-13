@@ -62,7 +62,7 @@ def sent2tokens(sent):
 
 # Compute f-score
 # TODO vectorize this function to make it faster using ndarray
-def compute_fscore(y_pred, Y_true):
+def compute_fscore(Y_pred, Y_true):
     pre = 0
     pre_tot = 0
     rec = 0
@@ -74,15 +74,15 @@ def compute_fscore(y_pred, Y_true):
         sentence_length = len(Y_true[i])
         for j in range(sentence_length):
             total += 1
-            if y_pred[i][j] == Y_true[i][j]:
+            if Y_pred[i][j] == Y_true[i][j]:
                 corr += 1
-            if helpers.label2str[int(y_pred[i][j])] != 'O':  # not 'O'
+            if helpers.label2str[int(Y_pred[i][j])] != 'O':  # not 'O'
                 pre_tot += 1
-                if y_pred[i][j] == Y_true[i][j]:
+                if Y_pred[i][j] == Y_true[i][j]:
                     pre += 1
             if helpers.label2str[int(Y_true[i][j])] != 'O':
                 rec_tot += 1
-                if y_pred[i][j] == Y_true[i][j]:
+                if Y_pred[i][j] == Y_true[i][j]:
                     rec += 1
     res = corr * 1. / total
     logging.info('Accuracy (token level) {}'.format(res))
@@ -168,7 +168,7 @@ class RNNTagger(object):
         predictions_probability = self.model.predict(features, batch_size=batch_size)
         predictions = np.argmax(predictions_probability, axis=-1)
         # TODO vectorize and exclude padding
-        fscore = compute_fscore(y_pred=predictions, Y_true=labels)
+        fscore = compute_fscore(Y_pred=predictions, Y_true=labels)
         logging.info('done testing...')
         return fscore
 
@@ -286,9 +286,9 @@ class CRFTagger(object):
             return [confidence]
         tagger.open(self.model_file)
         tagger.set(sent)
-        y_pred = tagger.tag()
-        p_y_pred = tagger.probability(y_pred)
-        confidence = pow(p_y_pred, 1. / len(y_pred))
+        Y_pred = tagger.tag()
+        p_y_pred = tagger.probability(Y_pred)
+        confidence = pow(p_y_pred, 1. / len(Y_pred))
         return [confidence]
 
     # TODO this seems to be unused?!
@@ -322,6 +322,6 @@ class CRFTagger(object):
         tagger = pycrfsuite.Tagger()
         tagger.open(self.model_file)
         # TODO this list comprehension is so slow, can we make it faster?
-        y_pred = [tagger.tag(xseq) for xseq in X_test]
-        f1score = compute_fscore(y_pred=y_pred, Y_true=Y_true)
+        Y_pred = [tagger.tag(xseq) for xseq in X_test]
+        f1score = compute_fscore(Y_pred=Y_pred, Y_true=Y_true)
         return f1score
