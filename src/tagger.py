@@ -61,7 +61,6 @@ def sent2tokens(sent):
 
 
 # Compute f-score
-# TODO vectorize this function to make it faster using ndarray
 def compute_fscore(Y_pred, Y_true):
     pre = 0
     pre_tot = 0
@@ -84,6 +83,48 @@ def compute_fscore(Y_pred, Y_true):
                 rec_tot += 1
                 if Y_pred[i][j] == Y_true[i][j]:
                     rec += 1
+    res = corr * 1. / total
+    logging.info('Accuracy (token level) {}'.format(res))
+    if pre_tot == 0:
+        pre = 0
+    else:
+        pre = 1. * pre / pre_tot
+    rec = 1. * rec / rec_tot
+    logging.info('Precision {} Recall {}'.format(pre, rec))
+    beta = 1
+    f1score = 0
+    if pre != 0 or rec != 0:
+        f1score = (beta * beta + 1) * pre * rec / \
+                  (beta * beta * pre + rec)
+    logging.info('F1 {}'.format(f1score))
+    return f1score
+
+
+# Compute f-score
+# TODO use masks to remove the remaining loop
+# TODO can run this vectorized function on the GPU for faster performance
+def compute_fscore_vectorized(Y_pred, Y_true):
+    pre = 0
+    pre_tot = 0
+    rec = 0
+    rec_tot = 0
+    corr = 0
+    total = 0
+    number_of_examples = len(Y_true)
+    for i in range(number_of_examples):
+        # TODO path sentence length as a third parameter
+        sentence_length = len(Y_true[i])
+        true_array = Y_true[i]
+        pred_array = Y_pred[i][:sentence_length]
+        is_correct = (pred_array == true_array)
+        is_positive = (true_array != helpers.labels_map['O'])
+        corr += np.sum(is_correct)
+        rec_tot += np.sum(is_positive)
+        rec += np.sum(is_positive & is_correct)
+        is_predicted = pred_array != helpers.labels_map['O']
+        pre_tot += np.sum(is_predicted)
+        pre += np.sum(is_predicted & is_correct)
+        total += sentence_length
     res = corr * 1. / total
     logging.info('Accuracy (token level) {}'.format(res))
     if pre_tot == 0:
