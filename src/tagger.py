@@ -101,13 +101,11 @@ def compute_fscore(y_pred, Y_true):
     return f1score
 
 
-def build_keras_model(max_len):
+def build_keras_model(max_len, input_dim, output_dim):
     logging.info('building Keras model...')
     input = Input(shape=(max_len,))
-    # TODO this should be a parameter
-    n_words = 20000
     # TODO use fixed embeddings
-    model = Embedding(input_dim=n_words, output_dim=40, input_length=max_len)(input)
+    model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len)(input)
     model = Dropout(0.1)(model)
     n_units = 128
     model = LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1)(model)
@@ -129,12 +127,12 @@ def build_keras_model(max_len):
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
-    def __init__(self, model_file, max_len):
+    def __init__(self, model_file, max_len, input_dim, output_dim):
         logging.info('RNN Tagger')
         self.model_file = model_file
         self.name = 'RNN'
-        # Untrained model
-        self.model = build_keras_model(max_len=max_len)
+        # TODO handle untrained model prediction / confidence
+        self.model = build_keras_model(max_len=max_len, input_dim=input_dim, output_dim=output_dim)
         # TODO how many times should we compile the model?
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         self.max_len = max_len
@@ -148,12 +146,6 @@ class RNNTagger(object):
         # TODO can we avoid this np.array call?
         idx = np.array(idx)
         idy = np.array(idy)
-        max_len = self.max_len
-#        self.model = build_keras_model(max_len)
-        logging.info('Model type: ')
-        logging.info(type(self.model))
-        logging.info('Model summary: ')
-        logging.info(self.model.summary())
         # TODO do we need a validation split?
         self.model.fit(idx, idy, batch_size=200, epochs=5, verbose=1)
         logging.info('done training...')

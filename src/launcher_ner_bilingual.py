@@ -205,11 +205,11 @@ def test_agent_online(robot, game, model, budget):
     logging.info('***TEST {}'.format(performance))
 
 
-def build_model(model_name, model_file, max_len):
+def build_model(model_name, model_file, max_len, input_dim, output_dim):
     if model_name == 'CRF':
         model = CRFTagger(model_file=model_file)
     elif model_name == 'RNN':
-        model = RNNTagger(model_file=model_file, max_len=max_len)
+        model = RNNTagger(model_file=model_file, max_len=max_len, input_dim=input_dim, output_dim=output_dim)
     else:
         logging.error('Invalid model type')
         assert False
@@ -246,7 +246,8 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
         # tagger
-        model = build_model(model_name=model_name, model_file=model_file, max_len=max_seq_len)
+        model = build_model(model_name=model_name, model_file=model_file, max_len=max_seq_len, input_dim=max_vocab_size,
+                            output_dim=emb_size)
         # play game
         episode = 1
         logging.info('>>>>>> Playing game ..')
@@ -274,7 +275,7 @@ def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_siz
         game2 = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
                                 emb_size=emb_size)
         robot.update_embeddings(game2.w2v)
-        model = build_model(model_name=model_name, model_file=model_file)
+        model = build_model(model_name=model_name, model_file=model_file, input_dim=max_vocab_size, output_dim=emb_size)
         test_agent_batch(robot, game2, model, budget)
         test_agent_online(robot, game2, model, budget)
 
