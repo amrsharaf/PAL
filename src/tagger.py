@@ -101,16 +101,17 @@ def compute_fscore(y_pred, Y_true):
     return f1score
 
 
-def build_keras_model(max_len, input_dim, output_dim):
+def build_keras_model(max_len, input_dim, output_dim, embedding_matrix):
     logging.info('building Keras model...')
     input = Input(shape=(max_len,))
     # TODO use fixed embeddings
-    model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len)(input)
+    model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len,
+                      weights=[embedding_matrix], trainable=False)(input)
     model = Dropout(0.1)(model)
     n_units = 128
-    model = LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1)(model)
+#    model = LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1)(model)
     # TODO the model below is a stronger bi-directional model
-    # model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
+    model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
     # TODO this should be a parameter
     n_tags = 5
     # TODO what does TimeDistributed do?
@@ -127,13 +128,15 @@ def build_keras_model(max_len, input_dim, output_dim):
 # TODO Implement RNN model
 # TODO handle off by one in tags
 class RNNTagger(object):
-    def __init__(self, model_file, max_len, input_dim, output_dim):
+    def __init__(self, model_file, max_len, input_dim, output_dim, embedding_matrix):
         logging.info('RNN Tagger')
         self.model_file = model_file
         self.name = 'RNN'
         # TODO handle untrained model prediction / confidence
-        self.model = build_keras_model(max_len=max_len, input_dim=input_dim, output_dim=output_dim)
+        self.model = build_keras_model(max_len=max_len, input_dim=input_dim, output_dim=output_dim,
+                                       embedding_matrix=embedding_matrix)
         # TODO how many times should we compile the model?
+        # TODO optimize the learning rate parameters for this model!
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         self.max_len = max_len
 
