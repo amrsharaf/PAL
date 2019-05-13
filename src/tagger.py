@@ -134,7 +134,9 @@ class RNNTagger(object):
         self.model_file = model_file
         self.name = 'RNN'
         # Untrained model
-        self.model = None
+        self.model = build_keras_model(max_len=max_len)
+        # TODO how many times should we compile the model?
+        self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         self.max_len = max_len
 
     # TODO Avoid lists all together by allocating large ndarray objects
@@ -147,12 +149,11 @@ class RNNTagger(object):
         idx = np.array(idx)
         idy = np.array(idy)
         max_len = self.max_len
-        self.model = build_keras_model(max_len)
+#        self.model = build_keras_model(max_len)
         logging.info('Model type: ')
         logging.info(type(self.model))
         logging.info('Model summary: ')
         logging.info(self.model.summary())
-        self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
         # TODO do we need a validation split?
         self.model.fit(idx, idy, batch_size=200, epochs=5, verbose=1)
         logging.info('done training...')
