@@ -74,7 +74,9 @@ class RobotCNNDQN:
         # train method
         self.trainStep = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
 
-        self.sess = tf.Session()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        self.sess = tf.Session(config=config)
         # ? multiple graphs: how to initialise variables ?
         self.sess.run(tf.global_variables_initializer())
 
