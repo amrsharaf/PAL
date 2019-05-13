@@ -165,6 +165,7 @@ class NERGame:
         self.queried_set_x = []
         self.queried_set_y = []
         self.queried_set_idx = []
+        self.queried_set_idy = []
         self.current_frame = 0
         self.episode += 1
         logging.info('> Next episode {}'.format(self.episode))
