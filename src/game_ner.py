@@ -144,7 +144,7 @@ class NERGame:
         # train with examples: self.model.train(self.queried_set_x, self.queried_set_y)
         if tagger.name == "RNN":
             tagger.train(self.queried_set_idx, self.queried_set_idy)
-            performance = tagger.test(self.dev_idx, self.dev_y)
+            performance = tagger.test(features=self.dev_idx, labels=self.dev_y)
             return performance
         else:
             # CRF case
