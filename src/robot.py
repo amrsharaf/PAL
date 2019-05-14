@@ -21,7 +21,7 @@ EXPLORE = 100000.  # frames over which to anneal epsilon
 class RobotCNNDQN:
 
     def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[], embedding_size=40):
-        print("Creating a robot: CNN-DQN")
+        logging.info('Creating a robot: CNN-DQN')
         # replay memory
         self.replay_memory = deque()
         self.time_step = 0
@@ -163,17 +163,18 @@ class RobotCNNDQN:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
         return action
 
+    # TODO can pull this function out of the class
     def weight_variable(self, shape):
         initial = tf.truncated_normal(shape, stddev=0.01)
         return tf.Variable(initial)
 
+    # TODO can pull this function out of the class
     def bias_variable(self, shape):
         initial = tf.constant(0.01, shape=shape)
         return tf.Variable(initial)
 
     def process_sentence(self):
         seq_len = self.max_len
-        vocab_size = self.vocab_size
         embedding_size = self.embedding_size
         filter_sizes = [3, 4, 5]
         num_filters = 128
@@ -187,8 +188,8 @@ class RobotCNNDQN:
         # embedding layer
         with tf.device('/cpu:0'), tf.name_scope('embedding'):
             # is able to train
-            self.w = tf.Variable(tf.random_uniform(
-                [self.vocab_size, embedding_size], -1.0, 1.0), trainable=False, name='W')
+            self.w = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0),
+                                 trainable=False, name='W')
             self.embedded_chars = tf.nn.embedding_lookup(self.w, self.sent)
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
 
@@ -197,8 +198,7 @@ class RobotCNNDQN:
             with tf.name_scope('conv-maxpool-%s' % filter_size):
                 # Convolution Layer
                 filter_shape = [filter_size, embedding_size, 1, num_filters]
-                W = tf.Variable(tf.truncated_normal(
-                    filter_shape, stddev=0.1), name='W')
+                W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name='W')
                 b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name='b')
                 conv = tf.nn.conv2d(
                     self.embedded_chars_expanded,
@@ -222,7 +222,7 @@ class RobotCNNDQN:
         h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
         # Add dropout
         with tf.name_scope('dropout'):
-            self.state_content = tf.nn.dropout(h_pool_flat, dropout_keep_prob)
+            self.state_content = tf.nn.dropout(h_pool_flat, rate=1-dropout_keep_prob)
 
     def process_prediction(self):
         seq_len = self.max_len
@@ -265,7 +265,7 @@ class RobotCNNDQN:
         ph_pool_flat = tf.reshape(ph_pool, [-1, num_filters_total])
         # Add dropout
         with tf.name_scope('dropout'):
-            self.state_marginals = tf.nn.dropout(ph_pool_flat, dropout_keep_prob)
+            self.state_marginals = tf.nn.dropout(ph_pool_flat, rate=1-dropout_keep_prob)
 
     def update_embeddings(self, embeddings):
         self.w_embeddings = embeddings
