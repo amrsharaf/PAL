@@ -13,6 +13,8 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
 from collections import defaultdict
 from itertools import chain
+import tensorflow as tf
+from keras import backend as K
 
 
 # TODO call by reference global variables!
@@ -20,7 +22,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--agent', help="require a decision agent")
     parser.add_argument( '--episode', type=int, help="require a maximum number of playing the game")
-    parser.add_argument('--budget', help="requrie a budget for annotating")
+    parser.add_argument('--budget', type=int, help="requrie a budget for annotating")
     parser.add_argument('--train', help="training phase")
     parser.add_argument('--test', help="testing phase")
     # tensorflow flag for the maximum sequence length
@@ -94,6 +96,15 @@ def get_vocabulary(sentences, max_vocab_size):
     for i, w in enumerate(sorted_words):
         word_to_idx[w] = i + 1
     return word_to_idx
+
+
+def setup_tensorflow_session():
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    # TODO can run faster by not logging this
+    # TODO create a command line flag for this
+#    config.log_device_placement = True
+    return tf.Session(config=config)
 
 
 # TODO is there a better way to handle UNK and PAD?
@@ -218,7 +229,7 @@ def build_model(model_name, model_file, max_len, input_dim, output_dim, embeddin
 
 
 def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode,
-             emb_size, model_name):
+             emb_size, model_name, session):
     actions = 2
     if agent == 'random':
         # TODO Implement this
@@ -229,7 +240,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         assert False
 #        robot = RobotDQN(actions)
     elif agent == 'CNNDQN':
-        robot = RobotCNNDQN(actions, embedding_size=embedding_size, max_len=max_seq_len)
+        robot = RobotCNNDQN(actions, embedding_size=embedding_size, max_len=max_seq_len, session=session)
     else:
         logging.info('** There is no robot.')
         raise SystemExit
@@ -316,11 +327,11 @@ def construct_languages(all_langs):
 
 def main():
     args = parse_args()
+    set_logger(args.log_path)
+    logging.info('working directory: {}'.format(os.getcwd()))
     logging.info('got args: ')
     logging.info(args)
-    print('args: ', args)
-    set_logger(args.log_path)
-    budget = int(args.budget)
+    budget = args.budget
     train_lang = construct_languages(args.train)
     # load the test data: target languages
     test_lang = construct_languages(args.test)
@@ -328,15 +339,18 @@ def main():
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
     model_name = args.model_name
+    logging.info('setting up tensorflow and keras sessions...')
+    session = setup_tensorflow_session()
+    K.set_session(session)
+    logging.info('done setting up keras session...')
     # play games for training a robot
     robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
-                     max_episode=args.episode, emb_size=embedding_size, model_name=model_name)
+                     max_episode=args.episode, emb_size=embedding_size, model_name=model_name, session=session)
     # play a new game with the trained robot
     run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
              max_vocab_size=max_vocab_size, emb_size=embedding_size, model_name=model_name)
 
 
 if __name__ == '__main__':
-    print('working directory: ', os.getcwd())
     main()

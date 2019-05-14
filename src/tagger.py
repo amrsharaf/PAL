@@ -11,6 +11,7 @@ import tensorflow as tf
 import numpy as np
 import os
 
+
 # TODO do we need POS features?
 # POS was commented out in previous versions of the code
 def word2features(sent, i):
@@ -191,7 +192,8 @@ class RNNTagger(object):
         idx = np.array(idx)
         idy = np.array(idy)
         # TODO do we need a validation split?
-        self.model.fit(idx, idy, batch_size=200, epochs=5, verbose=1)
+        # TODO these should be parameters
+        self.model.fit(idx, idy, batch_size=200, epochs=20, verbose=1)
         logging.info('done training...')
 
     # TODO use word embeddings
@@ -208,7 +210,6 @@ class RNNTagger(object):
         batch_size = min(num_samples, max_batch_size)
         predictions_probability = self.model.predict(features, batch_size=batch_size)
         predictions = np.argmax(predictions_probability, axis=-1)
-        # TODO vectorize and exclude padding
         fscore = compute_fscore(Y_pred=predictions, Y_true=labels)
         logging.info('done testing...')
         return fscore
