@@ -29,7 +29,8 @@ def load_data2labels(input_file, max_len):
                 # only store sequences with lenght <= max_len!
                 if len(seq_label) <= max_len:
                     seq_set.append(" ".join(seq))
-                    seq_set_label.append(seq_label)
+                    # Store labels as np arrays
+                    seq_set_label.append(np.array(seq_label))
                     seq_set_len.append(len(seq_label))
                 seq = []
                 seq_label = []
