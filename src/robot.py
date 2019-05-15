@@ -22,7 +22,7 @@ EXPLORE = 100000.  # frames over which to anneal epsilon
 class RobotCNNDQN:
 
     def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[], embedding_size=40, session=None):
-        logging.info('Creating a robot: CNN-DQN')
+        logging.debug('Creating a robot: CNN-DQN')
         # replay memory
         self.replay_memory = deque()
         self.time_step = 0
@@ -139,7 +139,7 @@ class RobotCNNDQN:
         self.time_step += 1
 
     def get_action(self, observation):
-        logging.info('DQN is smart.')
+        logging.debug('DQN is smart.')
         self.current_state = observation
         sent, confidence, predictions = self.current_state
         # print sent, confidence, predictions

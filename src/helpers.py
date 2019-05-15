@@ -13,7 +13,7 @@ labels_map = {'B-ORG': 2, 'O': 4, 'B-MISC': 3, 'B-PER': 0, 'I-PER': 0, 'B-LOC': 
 
 # TODO we can make this faster, or run it once and pickle the data
 def load_data2labels(input_file, max_len):
-    print('loading data from: ', input_file)
+    logging.debug('loading data from: {}'.format(input_file))
     seq_set = []
     seq = []
     seq_set_label = []
@@ -60,7 +60,7 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_si
         pre_w2v[w] = vec
     n_dict = len(vocab)
     if n_dict > max_vocab_size:
-        print('Vocabulary size is larger than ', max_vocab_size)
+        logging.debug('Vocabulary size is larger than {}'.format(max_vocab_size))
         raise SystemExit
     vocab_w2v = np.zeros((max_vocab_size, emb_size))
     for w, i in vocab.items():
@@ -68,7 +68,7 @@ def load_crosslingual_embeddings(input_file, vocab, max_vocab_size=20000, emb_si
             vocab_w2v[i] = pre_w2v[w]
         else:
             vocab_w2v[i] = list(np.random.uniform(-0.25, 0.25, emb_size))
-    logging.info('Vocabulary {} Embedding size {}'.format(n_dict, emb_size))
+    logging.debug('Vocabulary {} Embedding size {}'.format(n_dict, emb_size))
     return vocab_w2v
 
 

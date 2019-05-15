@@ -81,13 +81,13 @@ def get_vocabulary(sentences, max_vocab_size):
     assert max_vocab_size >= 2
     # Step 1 identify all unique words
     words = get_word_frequencies(sentences=sentences)
-    logging.info('number of unique words before frequency trimming: {}'.format(len(words)))
+    logging.debug('number of unique words before frequency trimming: {}'.format(len(words)))
     # Sort by frequency
     sorted_words = sorted(words.items(), key=lambda x: -x[1])
     # Only create vocab for the max_vocab_size entries, we don't need frequency anymore
     sorted_words = [w for (w, f) in sorted_words[:max_vocab_size-2]]
     n_words = len(sorted_words)
-    logging.info('number of unique words after frequency trimming: {}'.format(n_words))
+    logging.debug('number of unique words after frequency trimming: {}'.format(n_words))
     # TODO define these as constants
     # pad by zeros
     pad_value = 0
@@ -114,14 +114,14 @@ def setup_tensorflow_session():
 # TODO also keep track of train_idy, a padded version of tags
 def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
     # Load data
-    logging.info('Loading data ..')
+    logging.debug('Loading data ..')
     # TODO utilize train_lens, test_lens, dev_lens
     train_x, train_y, train_lens = helpers.load_data2labels(input_file=train_file, max_len=max_seq_len)
     test_x, test_y, test_lens = helpers.load_data2labels(input_file=test_file, max_len=max_seq_len)
     dev_x, dev_y, dev_lens = helpers.load_data2labels(input_file=dev_file, max_len=max_seq_len)
-    logging.info('Processing data')
+    logging.debug('Processing data')
     # Build vocabulary
-    logging.info('Max document length: {}'.format(max_seq_len))
+    logging.debug('Max document length: {}'.format(max_seq_len))
     # Create vocabulary
     word_to_idx = get_vocabulary(sentences=chain(train_x, dev_x, test_x), max_vocab_size=max_vocab_size)
     pad_value = word_to_idx['PAD']
@@ -145,11 +145,11 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
                                                emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx, train_idy]
-    logging.info('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
+    logging.debug('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
     test = [test_x, test_y, test_idx, test_idy]
     dev = [dev_x, dev_y, dev_idx, dev_idy]
     # load game
-    logging.info('Loading game ..')
+    logging.debug('Loading game ..')
     # TODO use named arguments here
     game = NERGame(story, test, dev, max_seq_len, w2v, budget)
     return game
@@ -183,7 +183,7 @@ def test_agent_batch(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(X_test, Y_true))
-    logging.info('***TEST {}'.format(performance))
+    logging.debug('***TEST {}'.format(performance))
 
 
 def test_agent_online(robot, game, model, budget):
@@ -216,7 +216,7 @@ def test_agent_online(robot, game, model, budget):
     train_sents = helpers.data2sents(queried_x, queried_y)
     model.train(train_sents)
     performance.append(model.test(X_test, Y_true))
-    logging.info('***TEST {}'.format(performance))
+    logging.debug('***TEST {}'.format(performance))
 
 
 def build_model(model_name, model_file, max_len, input_dim, output_dim, embedding_matrix):
@@ -245,7 +245,7 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
     elif agent == 'CNNDQN':
         robot = RobotCNNDQN(actions, embedding_size=embedding_size, max_len=max_seq_len, session=session)
     else:
-        logging.info('** There is no robot.')
+        logging.debug('** There is no robot.')
         raise SystemExit
 
     for i in range(train_lang_num):
@@ -265,18 +265,18 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
                             output_dim=emb_size, embedding_matrix=game.w2v)
         # play game
         episode = 1
-        logging.info('>>>>>> Playing game ..')
+        logging.debug('>>>>>> Playing game ..')
         while episode <= max_episode:
-            logging.info('>>>>>>> Current game round {} Maximum {}'.format(episode, max_episode))
+            logging.debug('>>>>>>> Current game round {} Maximum {}'.format(episode, max_episode))
             observation = game.get_frame(model)
             action = robot.get_action(observation)
-            logging.info('> Action {}'.format(action))
+            logging.debug('> Action {}'.format(action))
             reward, observation2, terminal = game.feedback(action, model)
-            logging.info('> Reward {}'.format(reward))
+            logging.debug('> Reward {}'.format(reward))
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
                 episode += 1
-                logging.info('> Terminal <')
+                logging.debug('> Terminal <')
     return robot
 
 
@@ -314,7 +314,7 @@ def construct_languages(all_langs):
     parts = all_langs.split(',')
     train_lang_num = int(len(parts) / 5)
     if len(parts) % 5 != 0:
-        logging.info('Wrong inputs of training')
+        logging.debug('Wrong inputs of training')
         raise SystemExit
     langs = []
     for i in range(train_lang_num):
@@ -340,10 +340,10 @@ def fix_random_seeds():
 def main():
     args = parse_args()
     set_logger(args.log_path)
-    logging.info('working directory: {}'.format(os.getcwd()))
-    logging.info('got args: ')
-    logging.info(args)
-    logging.info('fixing random seed, for full reproducibility, run on CPU and turn off multi-thread operations...')
+    logging.debug('working directory: {}'.format(os.getcwd()))
+    logging.debug('got args: ')
+    logging.debug(args)
+    logging.debug('fixing random seed, for full reproducibility, run on CPU and turn off multi-thread operations...')
     fix_random_seeds()
     budget = args.budget
     train_lang = construct_languages(args.train)
@@ -353,10 +353,10 @@ def main():
     max_vocab_size = args.max_vocab_size
     embedding_size = args.embedding_size
     model_name = args.model_name
-    logging.info('setting up tensorflow and keras sessions...')
+    logging.debug('setting up tensorflow and keras sessions...')
     session = setup_tensorflow_session()
     K.set_session(session)
-    logging.info('done setting up keras session...')
+    logging.debug('done setting up keras session...')
     # play games for training a robot
     robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
                      max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,

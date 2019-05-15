@@ -84,19 +84,19 @@ def compute_fscore(Y_pred, Y_true):
                 if Y_pred[i][j] == Y_true[i][j]:
                     rec += 1
     res = corr * 1. / total
-    logging.info('Accuracy (token level) {}'.format(res))
+    logging.debug('Accuracy (token level) {}'.format(res))
     if pre_tot == 0:
         pre = 0
     else:
         pre = 1. * pre / pre_tot
     rec = 1. * rec / rec_tot
-    logging.info('Precision {} Recall {}'.format(pre, rec))
+    logging.debug('Precision {} Recall {}'.format(pre, rec))
     beta = 1
     f1score = 0
     if pre != 0 or rec != 0:
         f1score = (beta * beta + 1) * pre * rec / \
                   (beta * beta * pre + rec)
-    logging.info('F1 {}'.format(f1score))
+    logging.debug('F1 {}'.format(f1score))
     return f1score
 
 
@@ -126,24 +126,24 @@ def compute_fscore_vectorized(Y_pred, Y_true):
         pre += np.sum(is_predicted & is_correct)
         total += sentence_length
     res = corr * 1. / total
-    logging.info('Accuracy (token level) {}'.format(res))
+    logging.debug('Accuracy (token level) {}'.format(res))
     if pre_tot == 0:
         pre = 0
     else:
         pre = 1. * pre / pre_tot
     rec = 1. * rec / rec_tot
-    logging.info('Precision {} Recall {}'.format(pre, rec))
+    logging.debug('Precision {} Recall {}'.format(pre, rec))
     beta = 1
     f1score = 0
     if pre != 0 or rec != 0:
         f1score = (beta * beta + 1) * pre * rec / \
                   (beta * beta * pre + rec)
-    logging.info('F1 {}'.format(f1score))
+    logging.debug('F1 {}'.format(f1score))
     return f1score
 
 
 def build_keras_model(max_len, input_dim, output_dim, embedding_matrix):
-    logging.info('building Keras model...')
+    logging.debug('building Keras model...')
     input = Input(shape=(max_len,))
     # TODO use fixed embeddings
     model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len,
@@ -158,11 +158,11 @@ def build_keras_model(max_len, input_dim, output_dim, embedding_matrix):
     # TODO what does TimeDistributed do?
     out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
     model = Model(input, out)
-    logging.info('Model type: ')
-    logging.info(type(model))
-    logging.info('Model summary: ')
-    logging.info(model.summary())
-    logging.info('done building model...')
+    logging.debug('Model type: ')
+    logging.debug(type(model))
+    logging.debug('Model summary: ')
+    logging.debug(model.summary())
+    logging.debug('done building model...')
     return model
 
 
@@ -170,7 +170,7 @@ def build_keras_model(max_len, input_dim, output_dim, embedding_matrix):
 # TODO handle off by one in tags
 class RNNTagger(object):
     def __init__(self, model_file, max_len, input_dim, output_dim, embedding_matrix):
-        logging.info('RNN Tagger')
+        logging.debug('RNN Tagger')
         self.model_file = model_file
         self.name = 'RNN'
         # TODO handle untrained model prediction / confidence
@@ -191,29 +191,29 @@ class RNNTagger(object):
     # TODO set hyper-parameters correctly
     # TODO can we avoid this np.array call?
     def train(self, idx, idy):
-        logging.info('starting training...')
+        logging.debug('starting training...')
         idx = np.array(idx)
         idy = np.array(idy)
         # Train only on the last history
         self.model.fit(idx, idy, batch_size=200, epochs=20, verbose=1)
-        logging.info('done training...')
+        logging.debug('done training...')
 
     # TODO use word embeddings
     # TODO label should be an ndarray
     # Keep track of length mask
     def test(self, features, labels):
         assert self.model is not None
-        logging.info('starting testing...')
+        logging.debug('starting testing...')
         # TODO what is the batch size?
         # Forward prop to get the predictions
         num_samples = features.shape[0]
-        logging.info('Number of samples: {}'.format(num_samples))
+        logging.debug('Number of samples: {}'.format(num_samples))
         max_batch_size = 4096
         batch_size = min(num_samples, max_batch_size)
         predictions_probability = self.model.predict(features, batch_size=batch_size)
         predictions = np.argmax(predictions_probability, axis=-1)
         fscore = compute_fscore(Y_pred=predictions, Y_true=labels)
-        logging.info('done testing...')
+        logging.debug('done testing...')
         return fscore
 
     def get_confidence(self, sentence_idx):
@@ -267,7 +267,7 @@ class RNNTagger(object):
 class CRFTagger(object):
 
     def __init__(self, model_file):
-        logging.info('CRF Tagger')
+        logging.debug('CRF Tagger')
         self.model_file = model_file
         self.name = 'CRF'
 
@@ -286,11 +286,11 @@ class CRFTagger(object):
         })
         trainer.train(self.model_file)
         if len(trainer.logparser.iterations) != 0:
-            logging.info('{} {}'.format(len(trainer.logparser.iterations), trainer.logparser.iterations[-1]))
+            logging.debug('{} {}'.format(len(trainer.logparser.iterations), trainer.logparser.iterations[-1]))
         else:
             # TODO
-            logging.info(len(trainer.logparser.iterations))
-            logging.info('There is no loss to present')
+            logging.debug(len(trainer.logparser.iterations))
+            logging.debug('There is no loss to present')
 
     # different lens
     # TODO can we refactor the sent2features better to avoid similar bugs in the future?

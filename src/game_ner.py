@@ -12,7 +12,7 @@ class NERGame:
     def __init__(self, story, test, dev, max_len, w2v, budget):
         # build environment
         # load data as story
-        logging.info('Initializing the game:')
+        logging.debug('Initializing the game:')
         # import story
         self.train_x, self.train_y, self.train_idx, self.train_idy = story
         self.test_x, self.test_y, self.test_idx, self.test_idy = test
@@ -24,11 +24,11 @@ class NERGame:
         self.max_len = max_len
         self.w2v = w2v
 
-        logging.info('Story: length = {}'.format(len(self.train_x)))
+        logging.debug('Story: length = {}'.format(len(self.train_x)))
         self.order = list(range(0, len(self.train_x)))
         # if re-order, use random.shuffle(self.order)
         # load word embeddings, pretrained - w2v
-        # logging.info "Dictionary size", len(self.w2v), "Embedding size",
+        # logging.debug "Dictionary size", len(self.w2v), "Embedding size",
         # len(self.w2v[0])
 
         # when queried times is 'budget', then stop
@@ -133,12 +133,12 @@ class NERGame:
             # simulate: obtain the labels
             labels = self.train_y[self.order[self.current_frame]]
             self.queried_times += 1
-            # logging.info "Select:", sentence, labels
+            # logging.debug "Select:", sentence, labels
             self.queried_set_x.append(sentence)
             self.queried_set_y.append(labels)
             self.queried_set_idx.append(self.train_idx[self.order[self.current_frame]])
             self.queried_set_idy.append(self.train_idy[self.order[self.current_frame]])
-            logging.info('> Queried times {}'.format(len(self.queried_set_x)))
+            logging.debug('> Queried times {}'.format(len(self.queried_set_x)))
 
     def get_performance(self, tagger):
         # train with {queried_set_x, queried_set_y}
@@ -170,4 +170,4 @@ class NERGame:
         self.current_frame = 0
         self.episode += 1
         model.reboot()
-        logging.info('> Next episode {}'.format(self.episode))
+        logging.debug('> Next episode {}'.format(self.episode))
