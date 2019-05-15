@@ -1,9 +1,6 @@
-import numpy as np
 import logging
-import re
-import itertools
-from collections import Counter
-import tensorflow as tf
+
+import numpy as np
 
 # map a label to a string
 #label2str = {1: "PER", 2: "LOC", 3: "ORG", 4: "MISC", 5: "O"}

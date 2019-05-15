@@ -1,7 +1,8 @@
+import logging
 import random
+
 import helpers
 import tagger
-import logging
 
 
 # TODO change this to a Gym environment

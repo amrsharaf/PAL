@@ -1,21 +1,23 @@
-import sys
 import argparse
-from game_ner import NERGame
-from robot import RobotCNNDQN
-import numpy as np
-import helpers
-from tagger import CRFTagger
-from tagger import RNNTagger
 import logging
-import tagger
 import os
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
+import random as rn
+import sys
 from collections import defaultdict
 from itertools import chain
+
+import numpy as np
 import tensorflow as tf
 from keras import backend as K
-import random as rn
+from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
+
+import helpers
+import tagger
+from game_ner import NERGame
+from robot import RobotCNNDQN
+from tagger import CRFTagger
+from tagger import RNNTagger
 
 
 # TODO call by reference global variables!

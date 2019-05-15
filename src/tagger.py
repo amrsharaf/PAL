@@ -1,12 +1,14 @@
-from keras.models import Model, Input
-from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
-import pycrfsuite
-import helpers
-import random
-import math
 import logging
-import numpy as np
+import math
 import os
+import random
+
+import numpy as np
+import pycrfsuite
+from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
+from keras.models import Model, Input
+
+import helpers
 
 
 # TODO do we need POS features?

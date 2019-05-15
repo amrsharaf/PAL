@@ -1,8 +1,9 @@
-import tensorflow as tf
-import numpy as np
-import random
 import logging
+import random
 from collections import deque
+
+import numpy as np
+import tensorflow as tf
 
 # Hyper Parameters:
 GAMMA = 0.99  # decay rate of past observations
