@@ -1,13 +1,10 @@
-from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model, Input
 from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
 import pycrfsuite
-import os
 import helpers
 import random
 import math
 import logging
-import tensorflow as tf
 import numpy as np
 import os
 
@@ -186,13 +183,15 @@ class RNNTagger(object):
     # TODO Fine tune instead of learn from scratch
     # TODO fix the word embeddings
     # TODO test offfline
+    # TODO do we need a validation split?
+    # TODO these should be parameters
+    # TODO set hyper-parameters correctly
+    # TODO can we avoid this np.array call?
     def train(self, idx, idy):
         logging.info('starting training...')
-        # TODO can we avoid this np.array call?
         idx = np.array(idx)
         idy = np.array(idy)
-        # TODO do we need a validation split?
-        # TODO these should be parameters
+        # Train only on the last history
         self.model.fit(idx, idy, batch_size=200, epochs=20, verbose=1)
         logging.info('done training...')
 
