@@ -97,7 +97,7 @@ class NERGame:
             # update special reward
             # reward = new_performance * 100
             # prepare the next game
-            self.reboot()  # set the current frame = 0
+            self.reboot(model)  # set the current frame = 0
             # TODO update these data together
             next_sentence = self.train_x[self.order[self.current_frame]]
             next_sentence_idx = self.train_idx[self.order[self.current_frame]]
@@ -156,7 +156,7 @@ class NERGame:
             # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
             return performance
 
-    def reboot(self):
+    def reboot(self, model):
         # resort story
         # why not use docvecs? TypeError: 'DocvecsArray' object does not
         # support item assignment
@@ -169,4 +169,5 @@ class NERGame:
         self.queried_set_idy = []
         self.current_frame = 0
         self.episode += 1
+        model.reboot()
         logging.info('> Next episode {}'.format(self.episode))

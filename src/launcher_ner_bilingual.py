@@ -163,7 +163,7 @@ def test_agent_batch(robot, game, model, budget):
     test_sents = helpers.data2sents(game.test_x, game.test_y)
     X_test = [tagger.sent2features(s) for s in test_sents]
     Y_true = [tagger.sent2labels(s) for s in test_sents]
-    game.reboot()
+    game.reboot(model)
     while i < budget:
         sel_ind = game.current_frame
         # construct the observation
@@ -195,7 +195,7 @@ def test_agent_online(robot, game, model, budget):
     test_sents = helpers.data2sents(game.test_x, game.test_y)
     X_test = [tagger.sent2features(s) for s in test_sents]
     Y_true = [tagger.sent2labels(s) for s in test_sents]
-    game.reboot()
+    game.reboot(model)
     while i < budget:
         sel_ind = game.current_frame
         # construct the observation

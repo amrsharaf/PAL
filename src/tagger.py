@@ -176,9 +176,10 @@ class RNNTagger(object):
         # TODO handle untrained model prediction / confidence
         self.model = build_keras_model(max_len=max_len, input_dim=input_dim, output_dim=output_dim,
                                        embedding_matrix=embedding_matrix)
-        # TODO how many times should we compile the model?
         # TODO optimize the learning rate parameters for this model!
+        # TODO how many times should we compile the model?
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+        self.initial_weights = self.model.get_weights()
         self.max_len = max_len
 
     # TODO Avoid lists all together by allocating large ndarray objects
@@ -255,6 +256,11 @@ class RNNTagger(object):
 #            y_marginals = np.ones((sentence_length, n_tags)) * 0.2
 #            return y_marginals
             return predictions_marginals
+
+    def reboot(self):
+        # TODO this has a side effect, but meh!
+        # TODO is it better to randomize the weights to avoid over-fitting at meta-training time?
+        self.model.set_weights(self.initial_weights)
 
 
 # TODO abstract away what is common with RNN Tagger
@@ -368,3 +374,6 @@ class CRFTagger(object):
         Y_pred = [tagger.tag(xseq) for xseq in X_test]
         f1score = compute_fscore(Y_pred=Y_pred, Y_true=Y_true)
         return f1score
+
+    def reboot(self):
+        pass
