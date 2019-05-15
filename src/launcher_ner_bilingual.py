@@ -15,6 +15,7 @@ from collections import defaultdict
 from itertools import chain
 import tensorflow as tf
 from keras import backend as K
+import random as rn
 
 
 # TODO call by reference global variables!
@@ -325,12 +326,23 @@ def construct_languages(all_langs):
     return langs
 
 
+def fix_random_seeds():
+    # fix random seed for numpy
+    np.random.seed(42)
+    # fix random seed for python random module
+    rn.seed(12345)
+    # fix random seed for tensorflow backend
+    tf.set_random_seed(1234)
+
+
 def main():
     args = parse_args()
     set_logger(args.log_path)
     logging.info('working directory: {}'.format(os.getcwd()))
     logging.info('got args: ')
     logging.info(args)
+    logging.info('fixing random seed, for full reproducibility, run on CPU and turn off multi-thread operations...')
+    fix_random_seeds()
     budget = args.budget
     train_lang = construct_languages(args.train)
     # load the test data: target languages
