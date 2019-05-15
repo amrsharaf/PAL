@@ -195,7 +195,7 @@ class RNNTagger(object):
         idx = np.array(idx)
         idy = np.array(idy)
         # Train only on the last history
-        self.model.fit(idx, idy, batch_size=200, epochs=20, verbose=1)
+        self.model.fit(idx, idy, batch_size=200, epochs=20, verbose=0)
         logging.debug('done training...')
 
     # TODO use word embeddings

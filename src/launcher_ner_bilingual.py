@@ -35,6 +35,8 @@ def parse_args():
     # Embedding size
     parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
     parser.add_argument('--log_path', type=str, required=False, default='log.txt', help='log file path')
+    # Log level
+    parser.add_argument('--log_level', type=str, required=False, default='INFO', help='logging level')
     # model name
     parser.add_argument('--model_name', type=str, default='CRF', help='model name')
     return parser.parse_args()
@@ -297,9 +299,9 @@ def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_siz
 
 
 # TODO can we get rid of the side effects in this function?
-def set_logger(log_path):
+def set_logger(log_path, log_level):
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
     file_handler = logging.FileHandler(log_path)
     file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
     logger.addHandler(file_handler)
@@ -339,7 +341,7 @@ def fix_random_seeds():
 
 def main():
     args = parse_args()
-    set_logger(args.log_path)
+    set_logger(args.log_path, args.log_level)
     logging.debug('working directory: {}'.format(os.getcwd()))
     logging.debug('got args: ')
     logging.debug(args)
