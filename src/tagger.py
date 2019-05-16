@@ -315,7 +315,8 @@ class CRFTagger(object):
         # if len(tagger.labels) < 5
         for i in range(len(sent)):
             y_i = []
-            for y in range(1, 6):
+            # TODO this should be a parameter
+            for y in range(5):
                 if str(y) in tagger.labels():
                     y_i.append(tagger.marginal(str(y), i))
                 else:
@@ -355,7 +356,8 @@ class CRFTagger(object):
         ttk = 0.
         for i in range(len(x)):
             y_probs = []
-            for y in range(1, 6):
+            # TODO this should be a parameter
+            for y in range(5):
                 if str(y) in tagger.labels():
                     y_probs.append(tagger.marginal(str(y), i))
                 else:
