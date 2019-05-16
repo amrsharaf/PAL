@@ -19,6 +19,16 @@ UPDATE_TIME = 100
 EXPLORE = 100000.  # frames over which to anneal epsilon
 
 
+def bias_variable(shape):
+    initial = tf.constant(0.01, shape=shape)
+    return tf.Variable(initial)
+
+
+def weight_variable(shape):
+    initial = tf.truncated_normal(shape, stddev=0.01)
+    return tf.Variable(initial)
+
+
 class RobotCNNDQN:
 
     def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[], embedding_size=40, session=None):
@@ -54,12 +64,12 @@ class RobotCNNDQN:
         self.process_prediction()
         # network weights
         # size of a sentence = 384
-        self.w_fc1_s = self.weight_variable([384, 256])
-        self.w_fc1_c = self.weight_variable([1, 256])
-        self.w_fc1_p = self.weight_variable([20, 256])
-        self.b_fc1 = self.bias_variable([256])
-        self.w_fc2 = self.weight_variable([256, self.action])
-        self.b_fc2 = self.bias_variable([self.action])
+        self.w_fc1_s = weight_variable([384, 256])
+        self.w_fc1_c = weight_variable([1, 256])
+        self.w_fc1_p = weight_variable([20, 256])
+        self.b_fc1 = bias_variable([256])
+        self.w_fc2 = weight_variable([256, self.action])
+        self.b_fc2 = bias_variable([self.action])
         # hidden layers
         self.h_fc1_all = tf.nn.relu(tf.matmul(self.state_content, self.w_fc1_s) + tf.matmul(
             self.state_marginals, self.w_fc1_p) + tf.matmul(self.state_confidence, self.w_fc1_c) + self.b_fc1)
@@ -159,16 +169,6 @@ class RobotCNNDQN:
         if self.epsilon > FINAL_EPSILON and self.time_step > OBSERVE:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
         return action
-
-    # TODO can pull this function out of the class
-    def weight_variable(self, shape):
-        initial = tf.truncated_normal(shape, stddev=0.01)
-        return tf.Variable(initial)
-
-    # TODO can pull this function out of the class
-    def bias_variable(self, shape):
-        initial = tf.constant(0.01, shape=shape)
-        return tf.Variable(initial)
 
     def process_sentence(self):
         seq_len = self.max_len
