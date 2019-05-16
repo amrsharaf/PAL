@@ -69,14 +69,11 @@ class RobotCNNDQN:
         self.action_input = tf.placeholder("float", [None, self.action])
         # reword input
         self.y_input = tf.placeholder("float", [None])
-
         q_action = tf.reduce_sum(tf.multiply(self.qvalue, self.action_input), reduction_indices=1)
         # error function
         self.cost = tf.reduce_mean(tf.square(self.y_input - q_action))
         # train method
         self.trainStep = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
-
-
         # ? multiple graphs: how to initialise variables ?
         self.sess.run(tf.global_variables_initializer())
 
