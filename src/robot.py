@@ -154,7 +154,6 @@ class RobotCNNDQN:
                                                        self.predictions: [predictions]})[0]
 
         action = np.zeros(self.action)
-        action_index = 0
         # if self.timeStep % FRAME_PER_ACTION == 0:
         if random.random() <= self.epsilon:
             action_index = random.randrange(self.action)
@@ -162,8 +161,6 @@ class RobotCNNDQN:
         else:
             action_index = np.argmax(qvalue)
             action[action_index] = 1
-        # else:
-        #    action[0] = 1 # do nothing
 
         # change episilon
         if self.epsilon > FINAL_EPSILON and self.time_step > OBSERVE:
