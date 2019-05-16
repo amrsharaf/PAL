@@ -149,7 +149,7 @@ class RobotCNNDQN:
         logging.debug('DQN is smart.')
         self.current_state = observation
         sent, confidence, predictions = self.current_state
-        # print sent, confidence, predictions
+        # logging.debug('{} {} {}'.fomrat(sent, confidence, predictions))
         qvalue = self.sess.run(self.qvalue, feed_dict={self.sent: [sent], self.state_confidence: [confidence],
                                                        self.predictions: [predictions]})[0]
 
@@ -172,13 +172,11 @@ class RobotCNNDQN:
         embedding_size = self.embedding_size
         filter_sizes = [3, 4, 5]
         num_filters = 128
-
         self.sent = tf.placeholder(tf.int32, [None, seq_len], name='input_x')
         # dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
         dropout_keep_prob = 0.5
         # Keeping track of l2 regularization loss (optional)
         l2_loss = tf.constant(0.0)
-
         # embedding layer
         with tf.device('/cpu:0'), tf.name_scope('embedding'):
             # is able to train
@@ -227,7 +225,6 @@ class RobotCNNDQN:
         num_filters = 20
         self.predictions_expanded = tf.expand_dims(self.predictions, -1)
         dropout_keep_prob = 0.5
-
         pooled_outputs = []
         for i, filter_size in enumerate(filter_sizes):
             with tf.name_scope('conv-maxpool-%s' % filter_size):
@@ -265,8 +262,8 @@ class RobotCNNDQN:
         self.w_embeddings = embeddings
         self.vocab_size = len(self.w_embeddings)
         self.embedding_size = len(self.w_embeddings[0])
-        print('Assigning new word embeddings')
-        print('New size', self.vocab_size)
+        logging.debug('Assigning new word embeddings')
+        logging.debug('New size {}'.format(self.vocab_size))
         self.sess.run(self.w.assign(self.w_embeddings))
         self.time_step = 0
         self.replay_memory = deque()
