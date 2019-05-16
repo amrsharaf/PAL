@@ -69,9 +69,8 @@ class NERGame:
         obervation = [sentence_idx, confidence, preds_padding]
         return obervation
 
-    # tagger = crf model
+    # tagger = model
     def feedback(self, action, model):
-        reward = 0.
         is_terminal = False
         if action[1] == 1:
             self.make_query = True
@@ -79,10 +78,7 @@ class NERGame:
             new_performance = self.get_performance(model)
             reward = new_performance - self.performance
             if new_performance != self.performance:
-                #reward = 3.
                 self.performance = new_performance
-            # else:
-                #reward = -1.
         else:
             reward = 0.
         # next frame
