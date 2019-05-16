@@ -29,7 +29,37 @@ def weight_variable(shape):
     return tf.Variable(initial)
 
 
-class RobotCNNDQN:
+# Robot interface
+class Robot(object):
+    def __init__(self):
+        pass
+
+    def update_embeddings(self, embeddings):
+        pass
+
+    def get_action(self, observation):
+        pass
+
+    def update(self, observation, action, reward, observation2, terminal):
+        pass
+
+
+# Random Robot
+class RobotRandom(Robot):
+    def __init__(self, actions):
+        self.actions = actions
+
+    def get_action(self, observation):
+        action = np.zeros(self.actions)
+        # Randomize between the available actions
+        action_index = np.random.randint(self.actions)
+        action[action_index] = 1
+        return action
+
+
+
+# CNNDQN Robot
+class RobotCNNDQN(Robot):
 
     def __init__(self, actions=2, vocab_size=20000, max_len=120, embeddings=[], embedding_size=40, session=None):
         logging.debug('Creating a robot: CNN-DQN')
@@ -106,7 +136,8 @@ class RobotCNNDQN:
         # Step 2: calculate y
         y_batch = []
         qvalue_batch = self.sess.run(self.qvalue, feed_dict={
-                                     self.sent: next_state_sent_batch, self.state_confidence: next_state_confidence_batch, self.predictions: next_state_predictions_batch})
+            self.sent: next_state_sent_batch, self.state_confidence: next_state_confidence_batch,
+            self.predictions: next_state_predictions_batch})
         for i in range(0, BATCH_SIZE):
             terminal = minibatch[i][4]
             if terminal:
@@ -123,7 +154,8 @@ class RobotCNNDQN:
             predictions_batch.append(predictions)
 
         self.sess.run(self.trainStep, feed_dict={
-                      self.y_input: y_batch, self.action_input: action_batch, self.sent: sent_batch, self.state_confidence: confidence_batch, self.predictions: predictions_batch})
+            self.y_input: y_batch, self.action_input: action_batch, self.sent: sent_batch,
+            self.state_confidence: confidence_batch, self.predictions: predictions_batch})
 
         # save network every 10000 iteration
         # if self.time_step % 10000 == 0:
@@ -152,7 +184,7 @@ class RobotCNNDQN:
         # logging.debug('{} {} {}'.fomrat(sent, confidence, predictions))
         qvalue = self.sess.run(self.qvalue, feed_dict={self.sent: [sent], self.state_confidence: [confidence],
                                                        self.predictions: [predictions]})[0]
-
+        # TODO make the interface for action more clear
         action = np.zeros(self.action)
         # if self.timeStep % FRAME_PER_ACTION == 0:
         if random.random() <= self.epsilon:
@@ -161,7 +193,6 @@ class RobotCNNDQN:
         else:
             action_index = np.argmax(qvalue)
             action[action_index] = 1
-
         # change episilon
         if self.epsilon > FINAL_EPSILON and self.time_step > OBSERVE:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
@@ -214,7 +245,7 @@ class RobotCNNDQN:
         h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
         # Add dropout
         with tf.name_scope('dropout'):
-            self.state_content = tf.nn.dropout(h_pool_flat, rate=1-dropout_keep_prob)
+            self.state_content = tf.nn.dropout(h_pool_flat, rate=1 - dropout_keep_prob)
 
     def process_prediction(self):
         seq_len = self.max_len
@@ -256,7 +287,7 @@ class RobotCNNDQN:
         ph_pool_flat = tf.reshape(ph_pool, [-1, num_filters_total])
         # Add dropout
         with tf.name_scope('dropout'):
-            self.state_marginals = tf.nn.dropout(ph_pool_flat, rate=1-dropout_keep_prob)
+            self.state_marginals = tf.nn.dropout(ph_pool_flat, rate=1 - dropout_keep_prob)
 
     def update_embeddings(self, embeddings):
         self.w_embeddings = embeddings
