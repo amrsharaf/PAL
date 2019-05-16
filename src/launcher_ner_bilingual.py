@@ -267,18 +267,21 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
                             output_dim=emb_size, embedding_matrix=game.w2v)
         # play game
         episode = 1
-        logging.debug('>>>>>> Playing game ..')
+        logging.info('>>>>>> Playing game ..')
+        gamma = 0.99
+        episode_return = 0.0
         while episode <= max_episode:
-            logging.debug('>>>>>>> Current game round {} Maximum {}'.format(episode, max_episode))
             observation = game.get_frame(model)
             action = robot.get_action(observation)
             logging.debug('> Action {}'.format(action))
             reward, observation2, terminal = game.feedback(action, model)
+            episode_return = gamma * episode_return + reward
             logging.debug('> Reward {}'.format(reward))
             robot.update(observation, action, reward, observation2, terminal)
             if terminal == True:
+                logging.info('>>>>>>> return for game round {}: {}'.format(episode, episode_return))
+                episode_return = 0.0
                 episode += 1
-                logging.debug('> Terminal <')
     return robot
 
 
