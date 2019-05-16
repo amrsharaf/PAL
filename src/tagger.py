@@ -295,6 +295,7 @@ class CRFTagger(object):
     # different lens
     # TODO can we refactor the sent2features better to avoid similar bugs in the future?
     # TODO review this function to make sure it's doing the right thing!
+    # TODO 5 should be a parameter!
     def get_predictions(self, sent):
         sent = sent.split()
         # use the same interface sent2features expects
@@ -310,7 +311,7 @@ class CRFTagger(object):
         tagger.set(sent)
         # TODO this should be a function
         y_marginals = []
-        # print "Tagset", tagger.labels()
+        # logging.debug('Tagset {}'.format(tagger.labels()))
         # ['1', '2', '3', '4', '5']
         # if len(tagger.labels) < 5
         for i in range(len(sent)):
