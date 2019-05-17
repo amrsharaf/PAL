@@ -1,16 +1,18 @@
-import keras
-from launcher_ner_bilingual import initialize_game
-from launcher_ner_bilingual import parse_args
-from launcher_ner_bilingual import construct_languages
-from launcher_ner_bilingual import set_logger
 import logging
+
+import keras
+import numpy
+from hyperas import optim
+from hyperas.distributions import choice
+from hyperopt import Trials, tpe
 from keras.layers import Embedding, Dropout, LSTM, Bidirectional, TimeDistributed, Dense
 from keras.models import Input, Model
-from hyperas import optim
-from hyperopt import Trials, tpe, STATUS_OK
+
+from launcher_ner_bilingual import construct_languages
+from launcher_ner_bilingual import initialize_game
+from launcher_ner_bilingual import parse_args
+from launcher_ner_bilingual import set_logger
 from tagger import compute_fscore
-import numpy
-from hyperas.distributions import uniform, choice
 
 
 def data():
