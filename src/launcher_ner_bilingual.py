@@ -3,8 +3,10 @@ import logging
 import os
 import random as rn
 import sys
+import time
 from collections import defaultdict
 from itertools import chain
+from collections import namedtuple
 
 import numpy as np
 import tensorflow as tf
@@ -16,8 +18,11 @@ import helpers
 import tagger
 from game_ner import NERGame
 from robot import RobotCNNDQN
+from robot import RobotRandom
 from tagger import CRFTagger
 from tagger import RNNTagger
+
+Language = namedtuple('Language', ['train', 'test', 'dev', 'emb', 'tagger'])
 
 
 # TODO call by reference global variables!
@@ -31,7 +36,7 @@ def parse_args():
     # tensorflow flag for the maximum sequence length
     parser.add_argument('--max_seq_len', type=int, default=120, required=False, help='sequence')
     # tensorflow flag for the maximum vocabulary size
-    parser.add_argument('--max_vocab_size', default=20000, required=False, help='vocabulary')
+    parser.add_argument('--max_vocab_size', type=int, default=20000, required=False, help='vocabulary')
     # Embedding size
     parser.add_argument('--embedding_size', type=int, default=40, required=False, help='embedding size')
     parser.add_argument('--log_path', type=str, required=False, default='log.txt', help='log file path')
@@ -114,7 +119,8 @@ def setup_tensorflow_session():
 
 # TODO is there a better way to handle UNK and PAD?
 # TODO also keep track of train_idy, a padded version of tags
-def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size):
+def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_len, max_vocab_size, emb_size,
+                    model_name):
     # Load data
     logging.debug('Loading data ..')
     # TODO utilize train_lens, test_lens, dev_lens
@@ -147,13 +153,13 @@ def initialize_game(train_file, test_file, dev_file, emb_file, budget, max_seq_l
                                                emb_size=emb_size)
     # prepare story
     story = [train_x, train_y, train_idx, train_idy]
-    logging.debug('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
+    logging.info('The length of the story {} (DEV = {}  TEST = {})'.format(len(train_x), len(dev_x), len(test_x)))
     test = [test_x, test_y, test_idx, test_idy]
     dev = [dev_x, dev_y, dev_idx, dev_idy]
     # load game
-    logging.debug('Loading game ..')
+    logging.info('Loading game ..')
     # TODO use named arguments here
-    game = NERGame(story, test, dev, max_seq_len, w2v, budget)
+    game = NERGame(story=story, dev=dev, max_len=max_seq_len, w2v=w2v, budget=budget, model_name=model_name)
     return game
 
 
@@ -233,32 +239,33 @@ def build_model(model_name, model_file, max_len, input_dim, output_dim, embeddin
     return model
 
 
-def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_size, embedding_size, max_episode,
-             emb_size, model_name, session):
+def play_ner(agent, train_lang, budget, max_seq_len, max_vocab_size, embedding_size, max_episode, emb_size, model_name,
+             session):
+    train_lang_num = len(train_lang)
     actions = 2
     if agent == 'random':
-        # TODO Implement this
-        assert False
-#        robot = RobotRandom(actions)
-    elif agent == 'DQN':
+        logging.info('Creating random robot...')
+        robot = RobotRandom(actions)
+    elif agent == 'dqn':
         # TODO Implement this
         assert False
 #        robot = RobotDQN(actions)
-    elif agent == 'CNNDQN':
+    elif agent == 'cnndqn':
+        logging.info('Creating CNN DQN robot...')
         robot = RobotCNNDQN(actions, embedding_size=embedding_size, max_len=max_seq_len, session=session)
     else:
-        logging.debug('** There is no robot.')
+        logging.info('** There is no robot.')
         raise SystemExit
 
     for i in range(train_lang_num):
-        train = train_lang[i][0]
-        test = train_lang[i][1]
-        dev = train_lang[i][2]
-        emb = train_lang[i][3]
-        model_file = train_lang[i][4]
+        train = train_lang[i].train
+        test = train_lang[i].test
+        dev = train_lang[i].dev
+        emb = train_lang[i].emb
+        model_file = train_lang[i].tagger
         # initialize a NER game
         game = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
-                               emb_size=emb_size)
+                               emb_size=emb_size, model_name=model_name)
         # initialize a decision robot
         # robot.initialise(game.max_len, game.w2v)
         robot.update_embeddings(game.w2v)
@@ -270,6 +277,9 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
         logging.info('>>>>>> Playing game ..')
         gamma = 0.99
         episode_return = 0.0
+        total_episodic_return = 0.0
+        episode_start = time.clock()
+        total_episodic_time = 0
         while episode <= max_episode:
             observation = game.get_frame(model)
             action = robot.get_action(observation)
@@ -278,22 +288,31 @@ def play_ner(agent, train_lang, train_lang_num, budget, max_seq_len, max_vocab_s
             episode_return = gamma * episode_return + reward
             logging.debug('> Reward {}'.format(reward))
             robot.update(observation, action, reward, observation2, terminal)
-            if terminal == True:
-                logging.info('>>>>>>> return for game round {}: {}'.format(episode, episode_return))
-                episode_return = 0.0
+            if terminal:
+                total_episodic_return = total_episodic_return + episode_return
+                average_episodic_return = total_episodic_return / float(episode + 1)
+                episode_time = time.clock() - episode_start
+                total_episodic_time = total_episodic_time + episode_time
+                logging.info('>>>>>>> {0} / {1} episode return: {2:.4f}, average return: {3:.4f}, episode time: {4:.4f}s, total time: {5:4f}s, last f-score: {6:.4}'.format(
+                    episode, max_episode, episode_return, average_episodic_return, episode_time, total_episodic_time, game.performance))
+                # Reset return and time for next episode
                 episode += 1
+                episode_return = 0.0
+                episode_start = time.clock()
     return robot
 
 
-def run_test(robot, test_lang, test_lang_num, budget, max_seq_len, max_vocab_size, emb_size, model_name):
+def run_test(robot, test_lang, budget, max_seq_len, max_vocab_size, emb_size, model_name):
+    test_lang_num = len(test_lang)
+    # TODO can do more pythonic looping
     for i in range(test_lang_num):
-        train = test_lang[i][0]
-        test = test_lang[i][1]
-        dev = test_lang[i][2]
-        emb = test_lang[i][3]
-        model_file = test_lang[i][4]
+        train = test_lang[i].train
+        test = test_lang[i].test
+        dev = test_lang[i].dev
+        emb = test_lang[i].emb
+        model_file = test_lang[i].tagger
         game2 = initialize_game(train, test, dev, emb, budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
-                                emb_size=emb_size)
+                                emb_size=emb_size, model_name=model_name)
         robot.update_embeddings(game2.w2v)
         model = build_model(model_name=model_name, model_file=model_file, input_dim=max_vocab_size, output_dim=emb_size,
                             embedding_matrix=game2.w2v)
@@ -329,7 +348,7 @@ def construct_languages(all_langs):
         dev = parts[lang_i + 2]
         emb = parts[lang_i + 3]
         tagger = parts[lang_i + 4]
-        langs.append((train, test, dev, emb, tagger))
+        langs.append(Language(train=train, test=test, dev=dev, emb=emb, tagger=tagger))
     return langs
 
 
@@ -363,12 +382,12 @@ def main():
     K.set_session(session)
     logging.debug('done setting up keras session...')
     # play games for training a robot
-    robot = play_ner(agent=args.agent, train_lang=train_lang, train_lang_num=len(train_lang), budget=budget,
-                     max_seq_len=max_seq_len, max_vocab_size=max_vocab_size, embedding_size=embedding_size,
+    robot = play_ner(agent=args.agent, train_lang=train_lang, budget=budget, max_seq_len=max_seq_len,
+                     max_vocab_size=max_vocab_size, embedding_size=embedding_size,
                      max_episode=args.episode, emb_size=embedding_size, model_name=model_name, session=session)
     # play a new game with the trained robot
-    run_test(robot=robot, test_lang=test_lang, test_lang_num=len(test_lang), budget=budget, max_seq_len=max_seq_len,
-             max_vocab_size=max_vocab_size, emb_size=embedding_size, model_name=model_name)
+    run_test(robot=robot, test_lang=test_lang, budget=budget, max_seq_len=max_seq_len, max_vocab_size=max_vocab_size,
+             emb_size=embedding_size, model_name=model_name)
 
 
 if __name__ == '__main__':
