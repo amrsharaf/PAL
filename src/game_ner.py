@@ -5,22 +5,26 @@ import helpers
 import tagger
 
 
+# TODO define a game interface
 # TODO change this to a Gym environment
 # TODO fix the random seed
+# TODO is it better to send the model?
+# TODO refactor to eliminate if statements
 class NERGame:
 
-    def __init__(self, story, test, dev, max_len, w2v, budget):
+    def __init__(self, story, dev, max_len, w2v, budget, model_name):
         # build environment
         # load data as story
         logging.info('Initializing the game:')
         # import story
         self.train_x, self.train_y, self.train_idx, self.train_idy = story
-        self.test_x, self.test_y, self.test_idx, self.test_idy = test
         self.dev_x, self.dev_y, self.dev_idx, self.dev_idy = dev
-        self.test_sents = helpers.data2sents(self.dev_x, self.dev_y)
+        self.dev_sents = helpers.data2sents(self.dev_x, self.dev_y)
         # TODO this should be a function
-        self.X_test = [tagger.sent2features(s) for s in self.test_sents]
-        self.Y_true = [tagger.sent2labels(s) for s in self.test_sents]
+        # Cache only for CRF model
+        if model_name == 'CRF':
+            self.X_dev = [tagger.sent2features(s) for s in self.dev_sents]
+            self.Y_dev = [tagger.sent2labels(s) for s in self.dev_sents]
         self.max_len = max_len
         self.w2v = w2v
         logging.info('Story: length = {}'.format(len(self.train_x)))
@@ -143,7 +147,7 @@ class NERGame:
             train_sents = helpers.data2sents(self.queried_set_x, self.queried_set_y)
             tagger.train(train_sents)
             # test on development data
-            performance = tagger.test(self.X_test, self.Y_true)
+            performance = tagger.test(self.X_dev, self.Y_dev)
             # performance = self.model.test2conlleval(self.dev_x, self.dev_y)
             return performance
 
