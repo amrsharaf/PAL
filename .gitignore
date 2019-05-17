@@ -5,3 +5,4 @@ log.txt
 *.xml
 *.iml
 .DS_Store
+*.lprof
