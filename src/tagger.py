@@ -145,11 +145,11 @@ def compute_fscore_vectorized(Y_pred, Y_true):
 def build_keras_model(max_len, input_dim, output_dim, embedding_matrix):
     logging.debug('building Keras model...')
     input = Input(shape=(max_len,))
-    # TODO use fixed embeddings
     model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len,
                       weights=[embedding_matrix], trainable=False)(input)
     model = Dropout(0.1)(model)
     n_units = 128
+#    model = Dense(n_units)(model)
 #    model = LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1)(model)
     # TODO the model below is a stronger bi-directional model
     model = Bidirectional(LSTM(units=n_units, return_sequences=True, recurrent_dropout=0.1))(model)
@@ -257,9 +257,11 @@ class RNNTagger(object):
 #            return y_marginals
             return predictions_marginals
 
+    # TODO debug peformance for the first episode with random robot
     def reboot(self):
         # TODO this has a side effect, but meh!
         # TODO is it better to randomize the weights to avoid over-fitting at meta-training time?
+        # TODO also reset optimizer learning rate etc..
         self.model.set_weights(self.initial_weights)
 
 
