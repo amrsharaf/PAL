@@ -13,17 +13,45 @@ import numpy as np
 from hyperas.distributions import uniform
 
 
-# TODO avoid global variables
+# TODO can load data faster
 def data():
-    global x_train_global, y_train_global, x_test_global, y_test_global
-    # TODO limit by budget
-    return x_train_global, y_train_global, x_test_global, y_test_global
+    args = parse_args()
+    set_logger(args.log_path, args.log_level)
+    logging.info('Args:')
+    logging.info(args)
+    lang = construct_languages(args.train)
+    assert len(lang) == 1
+    lang = lang[0]
+    # TODO Initializing a full game is an over-kill, maybe expose an easier interface for creating data
+    game = initialize_game(train_file=lang.train, test_file=lang.test, dev_file=lang.dev, emb_file=lang.emb,
+                           budget=args.budget, max_seq_len=args.max_seq_len, max_vocab_size=args.max_vocab_size,
+                           emb_size=args.embedding_size, model_name=args.model_name)
+    x_train = game.train_idx
+    y_train = game.train_idy
+    x_test = game.dev_idx
+    y_test = game.dev_y
+    return x_train, y_train, x_test, y_test
 
 
 # TODO can we avoid copy-paste for the kears model?
 # TODO can we avoid global variables?
+# TODO can load data faster
 def create_model(x_train, y_train, x_test, y_test):
-    global max_len, input_dim, embedding_matrix, output_dim
+    args = parse_args()
+    set_logger(args.log_path, args.log_level)
+    logging.info('Args:')
+    logging.info(args)
+    lang = construct_languages(args.train)
+    assert len(lang) == 1
+    lang = lang[0]
+    # TODO Initializing a full game is an over-kill, maybe expose an easier interface for creating data
+    game = initialize_game(train_file=lang.train, test_file=lang.test, dev_file=lang.dev, emb_file=lang.emb,
+                           budget=args.budget, max_seq_len=args.max_seq_len, max_vocab_size=args.max_vocab_size,
+                           emb_size=args.embedding_size, model_name=args.model_name)
+    max_len = args.max_seq_len
+    input_dim = args.max_vocab_size
+    output_dim = args.embedding_size
+    embedding_matrix = game.w2v
     logging.debug('building Keras model...')
     input = Input(shape=(max_len,))
     model = Embedding(input_dim=input_dim, output_dim=output_dim, input_length=max_len,
@@ -43,6 +71,7 @@ def create_model(x_train, y_train, x_test, y_test):
     logging.info(type(model))
     logging.info('Model summary: ')
     logging.info(model.summary())
+    model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
     logging.info('done building model...')
     logging.info('starting training...')
     # Train only on the last history
@@ -62,29 +91,6 @@ def create_model(x_train, y_train, x_test, y_test):
 
 
 def main():
-    global max_len, input_dim, embedding_matrix, output_dim
-    global x_train_global, y_train_global, x_test_global, y_test_global
-    args = parse_args()
-    set_logger(args.log_path, args.log_level)
-    logging.info('Args:')
-    logging.info(args)
-    lang = construct_languages(args.train)
-    assert len(lang) == 1
-    lang = lang[0]
-    # TODO Initializing a full game is an over-kill, maybe expose an easier interface for creating data
-    game = initialize_game(train_file=lang.train, test_file=lang.test, dev_file=lang.dev, emb_file=lang.emb,
-                           budget=args.budget, max_seq_len=args.max_seq_len, max_vocab_size=args.max_vocab_size,
-                           emb_size=args.embedding_size, model_name=args.model_name)
-    x_train_global = game.train_idx
-    y_train_global = game.train_y
-    x_test_global = game.dev_idx
-    y_test_global = game.dev_y
-    # TODO fix this interface
-    max_len = args.max_seq_len
-    input_dim = args.max_vocab_size
-    output_dim = args.embedding_size
-    embedding_matrix = game.w2v
-    logging.info('done creating data and model objects')
     best_run, best_model = optim.minimize(model=create_model, data=data, algo=tpe.suggest, max_evals=5, trials=Trials())
     x_train, y_train, x_test, y_test = data()
     logging.info('Evaluation of best performing model:')
