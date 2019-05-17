@@ -30,6 +30,9 @@ def data():
     y_train = game.train_idy
     x_test = game.dev_idx
     y_test = game.dev_y
+    permutation = numpy.random.permutation(len(x_train))
+    x_train = x_train[permutation]
+    y_train = y_train[permutation]
     x_train = x_train[:args.budget]
     y_train = y_train[:args.budget]
     return x_train, y_train, x_test, y_test
@@ -64,13 +67,14 @@ def create_model(x_train, y_train, x_test, y_test):
     logging.debug(type(model))
     logging.debug('Model summary: ')
     logging.debug(model.summary())
-    rmsprop = keras.optimizers.RMSprop(lr={{choice([0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001])}})
+    rmsprop = keras.optimizers.RMSprop(lr={{choice([0.0001])}})
     model.compile(optimizer=rmsprop, loss='categorical_crossentropy', metrics=['accuracy'])
     logging.debug('done building model...')
     logging.debug('starting training...')
-    print('x_train.shape: ', x_train.shape)
-    print('y_train.shape: ', y_train.shape)
-    model.fit(x_train, y_train, batch_size={{choice([4, 8])}}, epochs={{choice([100, 1000])}}, verbose=0)
+    num_train_examples = len(x_train)
+    for i in range(num_train_examples):
+        print('i: ', i)
+        model.fit(x_train[:i], y_train[:i], batch_size=200, epochs=20, verbose=0)
     logging.debug('done training...')
     logging.debug('starting testing...')
     num_samples = x_test.shape[0]
@@ -85,7 +89,7 @@ def create_model(x_train, y_train, x_test, y_test):
 
 
 def main():
-    best_run, best_model = optim.minimize(model=create_model, data=data, algo=tpe.suggest, max_evals=30, trials=Trials())
+    best_run, best_model = optim.minimize(model=create_model, data=data, algo=tpe.suggest, max_evals=10, trials=Trials())
     logging.info('Best performing model chosen hyper-parameters:')
     logging.info(best_run)
 
