@@ -19,12 +19,12 @@ class NERGame:
         # import story
         self.train_x, self.train_y, self.train_idx, self.train_idy = story
         self.dev_x, self.dev_y, self.dev_idx, self.dev_idy = dev
-        self.dev_sents = helpers.data2sents(self.dev_x, self.dev_y)
         # TODO this should be a function
         # Cache only for CRF model
         if model_name == 'CRF':
-            self.X_dev = [tagger.sent2features(s) for s in self.dev_sents]
-            self.Y_dev = [tagger.sent2labels(s) for s in self.dev_sents]
+            dev_sents = helpers.data2sents(self.dev_x, self.dev_y)
+            self.X_dev = [tagger.sent2features(s) for s in dev_sents]
+            self.Y_dev = [tagger.sent2labels(s) for s in dev_sents]
         self.max_len = max_len
         self.w2v = w2v
         logging.info('Story: length = {}'.format(len(self.train_x)))
