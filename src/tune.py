@@ -47,11 +47,11 @@ class CreateModel(object):
         # TODO what does TimeDistributed do?
         out = TimeDistributed(Dense(n_tags, activation='softmax'))(model)
         model = Model(input, out)
-        logging.debug('Model type: ')
-        logging.debug(type(model))
-        logging.debug('Model summary: ')
-        logging.debug(model.summary())
-        logging.debug('done building model...')
+        logging.info('Model type: ')
+        logging.info(type(model))
+        logging.info('Model summary: ')
+        logging.info(model.summary())
+        logging.info('done building model...')
         return model
 
 
@@ -76,8 +76,8 @@ def main():
     create_model = CreateModel(max_len=args.max_seq_len, input_dim=args.max_vocab_size, output_dim=args.embedding_size,
                                embedding_matrix=game.w2v)
     logging.info('done creating data and model objects')
-    best_run, best_model = optim.minimize(model=create_model, data=data, algo=tpe.suggest, max_evals=5, tirals=Trials())
-    x_train, y_train, x_test, y_test =data()
+    best_run, best_model = optim.minimize(model=create_model, data=data, algo=tpe.suggest, max_evals=5, trials=Trials())
+    x_train, y_train, x_test, y_test = data()
     logging.info('Evaluation of best performing model:')
     logging.info(best_model.evaluate(x_test, y_test))
     logging.info('Best performing model chosen hyper-parameters:')
